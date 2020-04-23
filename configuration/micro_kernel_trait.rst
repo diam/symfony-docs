@@ -22,13 +22,14 @@ via Composer:
 
 Next, create an ``index.php`` file that defines the kernel class and executes it::
 
+    // index.php
     use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+    use Symfony\Bundle\FrameworkBundle\Routing\Loader\Configurator\RoutingConfigurator;
     use Symfony\Component\Config\Loader\LoaderInterface;
     use Symfony\Component\DependencyInjection\ContainerBuilder;
     use Symfony\Component\HttpFoundation\JsonResponse;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\HttpKernel\Kernel as BaseKernel;
-    use Symfony\Component\Routing\RouteCollectionBuilder;
 
     require __DIR__.'/vendor/autoload.php';
 
@@ -51,7 +52,7 @@ Next, create an ``index.php`` file that defines the kernel class and executes it
             ]);
         }
 
-        protected function configureRoutes(RouteCollectionBuilder $routes)
+        protected function configureRoutes(RoutingConfigurator $routes)
         {
             // kernel is a service that points to this class
             // optional 3rd argument is the route name
@@ -79,9 +80,7 @@ That's it! To test it, start the :doc:`Symfony Local Web Server
 
     $ symfony server:start
 
-Then see the JSON response in your browser:
-
-    http://localhost:8000/random/10
+Then see the JSON response in your browser: http://localhost:8000/random/10
 
 The Methods of a "Micro" Kernel
 -------------------------------
@@ -98,9 +97,9 @@ that define your bundles, your services and your routes:
     of what you see in a normal ``config/packages/*`` file). You can also register
     services directly in PHP or load external configuration files (shown below).
 
-**configureRoutes(RouteCollectionBuilder $routes)**
+**configureRoutes(RoutingConfigurator $routes)**
     Your job in this method is to add routes to the application. The
-    ``RouteCollectionBuilder`` has methods that make adding routes in PHP more
+    ``RoutingConfigurator`` has methods that make adding routes in PHP more
     fun. You can also load external routing files (shown below).
 
 Advanced Example: Twig, Annotations and the Web Debug Toolbar
@@ -135,10 +134,10 @@ hold the kernel. Now it looks like this::
     namespace App;
 
     use Symfony\Bundle\FrameworkBundle\Kernel\MicroKernelTrait;
+    use Symfony\Bundle\FrameworkBundle\Routing\Loader\Configurator\RoutingConfigurator;
     use Symfony\Component\Config\Loader\LoaderInterface;
     use Symfony\Component\DependencyInjection\ContainerBuilder;
     use Symfony\Component\HttpKernel\Kernel as BaseKernel;
-    use Symfony\Component\Routing\RouteCollectionBuilder;
 
     class Kernel extends BaseKernel
     {
@@ -171,7 +170,7 @@ hold the kernel. Now it looks like this::
             }
         }
 
-        protected function configureRoutes(RouteCollectionBuilder $routes)
+        protected function configureRoutes(RoutingConfigurator $routes)
         {
             // import the WebProfilerRoutes, only if the bundle is enabled
             if (isset($this->bundles['WebProfilerBundle'])) {
@@ -331,6 +330,4 @@ As before you can use the :doc:`Symfony Local Web Server
     cd public/
     $ symfony server:start
 
-Then visit the page in your browser:
-
-    http://localhost:8000/random/10
+Then visit the page in your browser: http://localhost:8000/random/10

@@ -17,6 +17,7 @@ Validation Constraints Reference
    constraints/Length
    constraints/Url
    constraints/Regex
+   constraints/Hostname
    constraints/Ip
    constraints/Uuid
    constraints/Json
@@ -62,6 +63,9 @@ Validation Constraints Reference
    constraints/Isbn
    constraints/Issn
 
+   constraints/AtLeastOneOf
+   constraints/Sequentially
+   constraints/Compound
    constraints/Callback
    constraints/Expression
    constraints/All

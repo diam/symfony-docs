@@ -163,7 +163,9 @@ Symfony provides the following env var processors:
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                 xmlns:security="http://symfony.com/schema/dic/security"
                 xsi:schemaLocation="http://symfony.com/schema/dic/services
-                    https://symfony.com/schema/dic/services/services-1.0.xsd">
+                    https://symfony.com/schema/dic/services/services-1.0.xsd
+                    http://symfony.com/schema/dic/security
+                    https://symfony.com/schema/dic/security/security-1.0.xsd">
 
                 <parameters>
                     <parameter key="env(HEALTH_CHECK_METHOD)">Symfony\Component\HttpFoundation\Request::METHOD_HEAD</parameter>
@@ -232,8 +234,8 @@ Symfony provides the following env var processors:
             ]);
 
 ``env(resolve:FOO)``
-    Replaces the string ``FOO`` by the value of a config parameter with the
-    same name:
+    If the content of ``FOO`` includes container parameters (with the syntax
+    ``%parameter_name%``), it replaces the parameters by their values:
 
     .. configuration-block::
 

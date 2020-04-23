@@ -22,10 +22,9 @@ wraps the original PHPUnit binary to provide additional features:
 
     $ composer require --dev symfony/phpunit-bridge
 
-Each test - whether it's a unit test or a functional test - is a PHP class
-that should live in the ``tests/`` directory of your application. If you follow
-this rule, then you can run all of your application's tests with the following
-command:
+After the library downloads, try executing PHPUnit by running (the first time
+you run this, it will download PHPUnit itself and make its classes available in
+your app):
 
 .. code-block:: terminal
 
@@ -38,6 +37,11 @@ command:
     can remove the package (``composer remove symfony/phpunit-bridge``) and install
     it again. Another solution is to remove the project's ``symfony.lock`` file and
     run ``composer install`` to force the execution of all Symfony Flex recipes.
+
+Each test - whether it's a unit test or a functional test - is a PHP class
+that should live in the ``tests/`` directory of your application. If you follow
+this rule, then you can run all of your application's tests with the same
+command as before.
 
 PHPUnit is configured by the ``phpunit.xml.dist`` file in the root of your
 Symfony application.
@@ -208,21 +212,13 @@ Now you can use CSS selectors with the crawler. To assert that the phrase
 
     $this->assertSelectorTextContains('html h1.title', 'Hello World');
 
-This assertion will internally call ``$crawler->filter('html h1.title')``, which allows
-you to use CSS selectors to filter any HTML element in the page and check for
-its existence, attributes, text, etc.
+This assertion checks if the first element matching the CSS selector contains
+the given text. This asserts calls ``$crawler->filter('html h1.title')``
+internally, which allows you to use CSS selectors to filter any HTML element in
+the page and check for its existence, attributes, text, etc.
 
 The ``assertSelectorTextContains`` method is not a native PHPUnit assertion and is
 available thanks to the ``WebTestCase`` class.
-
-.. seealso::
-
-    Using native PHPUnit methods, the same assertion would look like this::
-
-        $this->assertGreaterThan(
-            0,
-            $crawler->filter('html h1.title:contains("Hello World")')->count()
-        );
 
 The crawler can also be used to interact with the page. Click on a link by first
 selecting it with the crawler using either an XPath expression or a CSS selector,
@@ -266,7 +262,7 @@ Or test against the response content directly if you just want to assert that
 the content contains some text or in case that the response is not an XML/HTML
 document::
 
-    $this->assertContains(
+    $this->assertStringContainsString(
         'Hello World',
         $client->getResponse()->getContent()
     );
@@ -312,7 +308,7 @@ document::
         );
 
         // asserts that the response content contains a string
-        $this->assertContains('foo', $client->getResponse()->getContent());
+        $this->assertStringContainsString('foo', $client->getResponse()->getContent());
         // ...or matches a regex
         $this->assertRegExp('/foo(bar)?/', $client->getResponse()->getContent());
 
@@ -484,7 +480,7 @@ script::
 AJAX Requests
 ~~~~~~~~~~~~~
 
-The Client provides a :method:`Symfony\\Component\\BrowserKit\\Client::xmlHttpRequest`
+The Client provides a :method:`Symfony\\Component\\BrowserKit\\AbstractBrowser::xmlHttpRequest`
 method, which has the same arguments as the ``request()`` method, and it's a
 shortcut to make AJAX requests::
 
@@ -545,10 +541,60 @@ allows fetching both public and all non-removed private services::
 
     // gives access to the same services used in your test, unless you're using
     // $client->insulate() or using real HTTP requests to test your application
+    // don't forget to call self::bootKernel() before, otherwise, the container
+    // will be empty
     $container = self::$container;
 
 For a list of services available in your application, use the ``debug:container``
 command.
+
+If a private service is *never* used in your application (outside of your test),
+it is *removed* from the container and cannot be accessed as described above. In
+that case, you can create a public alias in the ``test`` environment and access
+it via that alias:
+
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # config/services_test.yaml
+        services:
+            # access the service in your test via
+            # self::$container->get('test.App\Test\SomeTestHelper')
+            test.App\Test\SomeTestHelper:
+                # the id of the private service
+                alias: 'App\Test\SomeTestHelper'
+                public: true
+
+    .. code-block:: xml
+
+        <!-- config/services_test.xml -->
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <container xmlns="http://symfony.com/schema/dic/services"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+                https://symfony.com/schema/dic/services/services-1.0.xsd">
+
+            <services>
+                <!-- ... -->
+
+                <service id="test.App\Test\SomeTestHelper" alias="App\Test\SomeTestHelper" public="true"/>
+            </services>
+        </container>
+
+    .. code-block:: php
+
+        // config/services_test.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
+        use App\Service\MessageGenerator;
+        use App\Updates\SiteUpdateManager;
+
+        return function(ContainerConfigurator $configurator) {
+            // ...
+
+            $services->alias('test.App\Test\SomeTestHelper', 'App\Test\SomeTestHelper')->public();
+        };
 
 .. tip::
 
@@ -560,6 +606,64 @@ command.
 
     If the information you need to check is available from the profiler, use
     it instead.
+
+.. _testing_logging_in_users:
+
+Logging in Users (Authentication)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 5.1
+
+    The ``loginUser()`` method was introduced in Symfony 5.1.
+
+When you want to add functional tests for protected pages, you have to
+first "login" as a user. Reproducing the actual steps - such as
+submitting a login form - make a test very slow. For this reason, Symfony
+provides a ``loginUser()`` method to simulate logging in in your functional
+tests.
+
+Instead of login in with real users, it's recommended to create a user only for
+tests. You can do that with Doctrine :ref:`data fixtures <user-data-fixture>`,
+to load the testing users only in the test database.
+
+After loading users in your database, use your user repository to fetch
+this user and use
+:method:`$client->loginUser() <Symfony\\Bundle\\FrameworkBundle\\KernelBrowser::loginUser>`
+to simulate a login request::
+
+    // tests/Controller/ProfileControllerTest.php
+    namespace App\Tests\Controller;
+
+    use App\Repository\UserRepository;
+    use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+    class ProfileControllerTest extends WebTestCase
+    {
+        // ...
+
+        public function testVisitingWhileLoggedIn()
+        {
+            $client = static::createClient();
+            $userRepository = static::$container->get(UserRepository::class);
+
+            // retrieve the test user
+            $testUser = $userRepository->findOneByEmail('john.doe@example.com');
+
+            // simulate $testUser being logged in
+            $client->loginUser($testUser);
+
+            // test e.g. the profile page
+            $client->request('GET', '/profile');
+            $this->assertResponseIsSuccessful();
+            $this->assertSelectorTextContains('h1', 'Hello John!');
+        }
+    }
+
+You can pass any
+:class:`Symfony\\Component\\Security\\Core\\User\\UserInterface` instance to
+``loginUser()``. This method creates a special
+:class:`Symfony\\Bundle\\FrameworkBundle\\Test\\TestBrowserToken` object and
+stores in the session of the test client.
 
 Accessing the Profiler Data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1071,5 +1175,5 @@ Learn more
 .. _`PHPUnit`: https://phpunit.de/
 .. _`documentation`: https://phpunit.readthedocs.io/
 .. _`PHPUnit Bridge component`: https://symfony.com/components/PHPUnit%20Bridge
-.. _`$_SERVER`: https://php.net/manual/en/reserved.variables.server.php
+.. _`$_SERVER`: https://www.php.net/manual/en/reserved.variables.server.php
 .. _`data providers`: https://phpunit.de/manual/current/en/writing-tests-for-phpunit.html#writing-tests-for-phpunit.data-providers

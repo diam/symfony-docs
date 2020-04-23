@@ -149,12 +149,12 @@ service, including controllers::
     namespace App\Controller;
 
     use Symfony\Component\HttpFoundation\Response;
-    use Symfony\Component\Mercure\Publisher;
+    use Symfony\Component\Mercure\PublisherInterface;
     use Symfony\Component\Mercure\Update;
 
     class PublishController
     {
-        public function __invoke(Publisher $publisher): Response
+        public function __invoke(PublisherInterface $publisher): Response
         {
             $update = new Update(
                 'http://example.com/books/1',
@@ -286,7 +286,7 @@ by using the ``AbstractController::addLink`` helper method::
     use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
     use Symfony\Component\HttpFoundation\JsonResponse;
     use Symfony\Component\HttpFoundation\Request;
-    use Symfony\Component\WebLink\LInk;
+    use Symfony\Component\WebLink\Link;
 
     class DiscoverController extends AbstractController
     {
@@ -336,12 +336,12 @@ as the third parameter of the ``Update`` constructor::
     namespace App\Controller;
 
     use Symfony\Component\HttpFoundation\Response;
-    use Symfony\Component\Mercure\Publisher;
+    use Symfony\Component\Mercure\PublisherInterface;
     use Symfony\Component\Mercure\Update;
 
     class PublishController
     {
-        public function __invoke(Publisher $publisher): Response
+        public function __invoke(PublisherInterface $publisher): Response
         {
             $update = new Update(
                 'http://example.com/books/1',
@@ -398,6 +398,7 @@ And here is the controller::
 
     use Lcobucci\JWT\Builder;
     use Lcobucci\JWT\Signer\Hmac\Sha256;
+    use Lcobucci\JWT\Signer\Key;
     use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\HttpFoundation\Response;
@@ -413,9 +414,8 @@ And here is the controller::
             $username = $this->getUser()->getUsername(); // Retrieve the username of the current user
             $token = (new Builder())
                 // set other appropriate JWT claims, such as an expiration date
-                ->set('mercure', ['subscribe' => ["http://example.com/user/$username"]]) // could also include the security roles, or anything else
-                ->sign(new Sha256(), $this->getParameter('mercure_secret_key')) // don't forget to set this parameter! Test value: aVerySecretKey
-                ->getToken();
+                ->withClaim('mercure', ['subscribe' => ["http://example.com/user/$username"]]) // could also include the security roles, or anything else
+                ->getToken(new Sha256(), new Key($this->getParameter('mercure_secret_key'))); // don't forget to set this parameter! Test value: aVerySecretKey
 
             $response = $this->json(['@id' => '/demo/books/1', 'availability' => 'https://schema.org/InStock']);
             $response->headers->set(
@@ -551,9 +551,10 @@ be handled by a stub publisher::
     // tests/Functional/Fixtures/PublisherStub.php
     namespace App\Tests\Functional\Fixtures;
 
+    use Symfony\Component\Mercure\PublisherInterface;
     use Symfony\Component\Mercure\Update;
 
-    class PublisherStub
+    class PublisherStub implements PublisherInterface
     {
         public function __invoke(Update $update): string
         {
@@ -609,16 +610,16 @@ Enable the panel in your configuration, as follows:
 
 .. image:: /_images/mercure/panel.png
 
-.. _`the Mercure protocol`: https://github.com/dunglas/mercure#protocol-specification
-.. _`Server-Sent Events (SSE)`: https://developer.mozilla.org/docs/Server-sent_events
+.. _`the Mercure protocol`: https://mercure.rocks/spec
+.. _`Server-Sent Events (SSE)`: https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
 .. _`a polyfill`: https://github.com/Yaffle/EventSource
-.. _`high-level implementations`: https://github.com/dunglas/mercure#tools
+.. _`high-level implementations`: https://mercure.rocks/docs/ecosystem/awesome
 .. _`In this recording`: https://www.youtube.com/watch?v=UI1l0JOjLeI
 .. _`Mercure.rocks`: https://mercure.rocks
 .. _`API Platform distribution`: https://api-platform.com/docs/distribution/
 .. _`JSON Web Token`: https://tools.ietf.org/html/rfc7519
 .. _`example JWT`: https://jwt.io/#debugger-io?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJtZXJjdXJlIjp7InB1Ymxpc2giOlsiKiJdfX0.iHLdpAEjX4BqCsHJEegxRmO-Y6sMxXwNATrQyRNt3GY
 .. _`IRI`: https://tools.ietf.org/html/rfc3987
-.. _`practical UI`: https://twitter.com/chromedevtools/status/562324683194785792
+.. _`practical UI`: https://twitter.com/ChromeDevTools/status/562324683194785792
 .. _`the dedicated API Platform documentation`: https://api-platform.com/docs/core/mercure/
 .. _`the online debugger`: https://uri-template-tester.mercure.rocks

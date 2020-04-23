@@ -17,7 +17,7 @@ First, enable the JSON login under your firewall:
 
             firewalls:
                 main:
-                    anonymous: ~
+                    anonymous: lazy
                     json_login:
                         check_path: /login
 
@@ -29,11 +29,13 @@ First, enable the JSON login under your firewall:
             xmlns:srv="http://symfony.com/schema/dic/services"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <firewall name="main">
-                    <anonymous/>
+                    <anonymous lazy="true"/>
                     <json-login check-path="/login"/>
                 </firewall>
             </config>
@@ -45,7 +47,7 @@ First, enable the JSON login under your firewall:
         $container->loadFromExtension('security', [
             'firewalls' => [
                 'main' => [
-                    'anonymous'  => null,
+                    'anonymous'  => 'lazy',
                     'json_login' => [
                         'check_path' => '/login',
                     ],
@@ -163,7 +165,7 @@ The security configuration should be:
 
             firewalls:
                 main:
-                    anonymous: ~
+                    anonymous: lazy
                     json_login:
                         check_path:    login
                         username_path: security.credentials.login
@@ -177,14 +179,16 @@ The security configuration should be:
             xmlns:srv="http://symfony.com/schema/dic/services"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <firewall name="main">
-                    <anonymous/>
+                    <anonymous lazy="true"/>
                     <json-login check-path="login"
-                                username-path="security.credentials.login"
-                                password-path="security.credentials.password"/>
+                        username-path="security.credentials.login"
+                        password-path="security.credentials.password"/>
                 </firewall>
             </config>
         </srv:container>
@@ -195,7 +199,7 @@ The security configuration should be:
         $container->loadFromExtension('security', [
             'firewalls' => [
                 'main' => [
-                    'anonymous'  => null,
+                    'anonymous'  => 'lazy',
                     'json_login' => [
                         'check_path' => 'login',
                         'username_path' => 'security.credentials.login',

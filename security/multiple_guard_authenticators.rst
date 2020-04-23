@@ -27,7 +27,7 @@ This is how your security configuration can look in action:
             # ...
             firewalls:
                 default:
-                    anonymous: ~
+                    anonymous: lazy
                     guard:
                         authenticators:
                             - App\Security\LoginFormAuthenticator
@@ -42,12 +42,14 @@ This is how your security configuration can look in action:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
                 <firewall name="default">
-                    <anonymous/>
+                    <anonymous lazy="true"/>
                     <guard entry-point="App\Security\LoginFormAuthenticator">
                         <authenticator>App\Security\LoginFormAuthenticator</authenticator>
                         <authenticator>App\Security\FacebookConnectAuthenticator</authenticator>
@@ -66,7 +68,7 @@ This is how your security configuration can look in action:
             // ...
             'firewalls' => [
                 'default' => [
-                    'anonymous' => null,
+                    'anonymous' => 'lazy',
                     'guard' => [
                         'entry_point' => LoginFormAuthenticator::class,
                         'authenticators' => [
@@ -103,7 +105,7 @@ the solution is to split the configuration into two separate firewalls:
                         authenticators:
                             - App\Security\ApiTokenAuthenticator
                 default:
-                    anonymous: ~
+                    anonymous: lazy
                     guard:
                         authenticators:
                             - App\Security\LoginFormAuthenticator
@@ -120,7 +122,9 @@ the solution is to split the configuration into two separate firewalls:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -130,7 +134,7 @@ the solution is to split the configuration into two separate firewalls:
                     </guard>
                 </firewall>
                 <firewall name="default">
-                    <anonymous/>
+                    <anonymous lazy="true"/>
                     <guard>
                         <authenticator>App\Security\LoginFormAuthenticator</authenticator>
                     </guard>
@@ -159,7 +163,7 @@ the solution is to split the configuration into two separate firewalls:
                     ],
                 ],
                 'default' => [
-                    'anonymous' => null,
+                    'anonymous' => 'lazy',
                     'guard' => [
                         'authenticators' => [
                             LoginFormAuthenticator::class,

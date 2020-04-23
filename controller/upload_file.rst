@@ -74,7 +74,7 @@ so Symfony doesn't try to get/set its value from the related entity::
                     'mapped' => false,
 
                     // make it optional so you don't have to re-upload the PDF file
-                    // everytime you edit the Product details
+                    // every time you edit the Product details
                     'required' => false,
 
                     // unmapped fields can't define their validation using annotations
@@ -129,13 +129,14 @@ Finally, you need to update the code of the controller that handles the form::
     use Symfony\Component\HttpFoundation\File\UploadedFile;
     use Symfony\Component\HttpFoundation\Request;
     use Symfony\Component\Routing\Annotation\Route;
+    use Symfony\Component\String\Slugger\SluggerInterface;
 
     class ProductController extends AbstractController
     {
         /**
          * @Route("/product/new", name="app_product_new")
          */
-        public function new(Request $request)
+        public function new(Request $request, SluggerInterface $slugger)
         {
             $product = new Product();
             $form = $this->createForm(ProductType::class, $product);
@@ -143,14 +144,14 @@ Finally, you need to update the code of the controller that handles the form::
 
             if ($form->isSubmitted() && $form->isValid()) {
                 /** @var UploadedFile $brochureFile */
-                $brochureFile = $form['brochure']->getData();
+                $brochureFile = $form->get('brochure')->getData();
 
                 // this condition is needed because the 'brochure' field is not required
                 // so the PDF file must be processed only when a file is uploaded
                 if ($brochureFile) {
                     $originalFilename = pathinfo($brochureFile->getClientOriginalName(), PATHINFO_FILENAME);
                     // this is needed to safely include the file name as part of the URL
-                    $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
+                    $safeFilename = $slugger->slug($originalFilename);
                     $newFilename = $safeFilename.'-'.uniqid().'.'.$brochureFile->guessExtension();
 
                     // Move the file to the directory where brochures are stored
@@ -238,20 +239,23 @@ logic to a separate service::
 
     use Symfony\Component\HttpFoundation\File\Exception\FileException;
     use Symfony\Component\HttpFoundation\File\UploadedFile;
+    use Symfony\Component\String\Slugger\SluggerInterface;
 
     class FileUploader
     {
         private $targetDirectory;
+        private $slugger;
 
-        public function __construct($targetDirectory)
+        public function __construct($targetDirectory, SluggerInterface $slugger)
         {
             $this->targetDirectory = $targetDirectory;
+            $this->slugger = $slugger;
         }
 
         public function upload(UploadedFile $file)
         {
             $originalFilename = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-            $safeFilename = transliterator_transliterate('Any-Latin; Latin-ASCII; [^A-Za-z0-9_] remove; Lower()', $originalFilename);
+            $safeFilename = $this->slugger->slug($originalFilename);
             $fileName = $safeFilename.'-'.uniqid().'.'.$file->guessExtension();
 
             try {

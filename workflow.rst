@@ -46,7 +46,7 @@ like this:
 
     .. code-block:: yaml
 
-        # config/framework.yaml
+        # config/packages/workflow.yaml
         framework:
             workflows:
                 blog_publishing:
@@ -77,16 +77,18 @@ like this:
 
     .. code-block:: xml
 
-        <!-- app/config/config.xml -->
+        <!-- config/packages/workflow.xml -->
         <?xml version="1.0" encoding="UTF-8" ?>
         <container xmlns="http://symfony.com/schema/dic/services"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:framework="http://symfony.com/schema/dic/symfony"
-            xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd
-                http://symfony.com/schema/dic/symfony https://symfony.com/schema/dic/symfony/symfony-1.0.xsd"
-        >
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+            https://symfony.com/schema/dic/services/services-1.0.xsd
+            http://symfony.com/schema/dic/symfony
+            https://symfony.com/schema/dic/symfony/symfony-1.0.xsd">
 
             <framework:config>
+                <!-- or type="state_machine" -->
                 <framework:workflow name="blog_publishing" type="workflow">
                     <framework:audit-trail enabled="true"/>
                     <framework:marking-store type="single_state">
@@ -116,9 +118,10 @@ like this:
 
     .. code-block:: php
 
-        // app/config/config.php
+        // config/packages/workflow.php
+        use App\Entity\BlogPost;
+
         $container->loadFromExtension('framework', [
-            // ...
             'workflows' => [
                 'blog_publishing' => [
                     'type' => 'workflow', // or 'state_machine'
@@ -126,10 +129,10 @@ like this:
                         'enabled' => true
                     ],
                     'marking_store' => [
-                        'type' => 'method'
-                        'property' => 'currentPlace'
+                        'type' => 'method',
+                        'property' => 'currentPlace',
                     ],
-                    'supports' => ['App\Entity\BlogPost'],
+                    'supports' => [BlogPost::class],
                     'initial_marking' => 'draft',
                     'places' => [
                         'draft',
@@ -160,14 +163,25 @@ like this:
     If you are creating your first workflows, consider using the ``workflow:dump``
     command to :doc:`debug the workflow contents </workflow/dumping-workflows>`.
 
-As configured, the following property is used by the marking store::
+The configured property will be used via it's implemented getter/setter methods by the marking store::
 
     class BlogPost
     {
-        // This property is used by the marking store
-        public $currentPlace;
-        public $title;
-        public $content;
+        // the configured property must be declared
+        private $currentPlace;
+        private $title;
+        private $content;
+
+        // getter/setter methods must exist for property access by the marking store
+        public function getCurrentPlace()
+        {
+            return $this->currentPlace;
+        }
+
+        public function setCurrentPlace($currentPlace, $context = [])
+        {
+            $this->currentPlace = $currentPlace;
+        }
     }
 
 .. note::
@@ -179,8 +193,8 @@ As configured, the following property is used by the marking store::
     configures the marking store according to the "type" by default, so it's
     preferable to not configure it.
 
-    A single state marking store uses a string to store the data. A multiple
-    state marking store uses an array to store the data.
+    A single state marking store uses a ``string`` to store the data. A multiple
+    state marking store uses an ``array`` to store the data.
 
 .. tip::
 
@@ -234,9 +248,9 @@ registry in the constructor::
             $this->workflowRegistry = $workflowRegistry;
         }
 
-        public function toReview(BlogPost $blogPost)
+        public function toReview(BlogPost $post)
         {
-            $workflow = $this->workflowRegistry->get($blogPost);
+            $workflow = $this->workflowRegistry->get($post);
 
             // Update the currentState on the post
             try {
@@ -334,6 +348,14 @@ order:
     * ``workflow.[workflow name].announce``
     * ``workflow.[workflow name].announce.[transition name]``
 
+    You can avoid triggering those events by using the context::
+
+        $workflow->apply($subject, $transitionName, [Workflow::DISABLE_ANNOUNCE_EVENT => true]);
+
+    .. versionadded:: 5.1
+
+        The ``Workflow::DISABLE_ANNOUNCE_EVENT`` constant was introduced in Symfony 5.1.
+
 .. note::
 
     The leaving and entering events are triggered even for transitions that stay
@@ -404,8 +426,7 @@ missing a title::
             $title = $post->title;
 
             if (empty($title)) {
-                // Block the transition "to_review" if the post has no title
-                $event->setBlocked(true);
+                $event->setBlocked(true, 'This blog post cannot be marked as reviewed because it has no title.');
             }
         }
 
@@ -416,6 +437,10 @@ missing a title::
             ];
         }
     }
+
+.. versionadded:: 5.1
+
+    The optional second argument of ``setBlocked()`` was introduced in Symfony 5.1.
 
 Event Methods
 ~~~~~~~~~~~~~
@@ -438,8 +463,8 @@ This means that each event has access to the following information:
 :method:`Symfony\\Component\\Workflow\\Event\\Event::getMetadata`
     Returns a metadata.
 
-For Guard Events, there is an extended class :class:`Symfony\\Component\\Workflow\\Event\\GuardEvent`.
-This class has two more methods:
+For Guard Events, there is an extended :class:`Symfony\\Component\\Workflow\\Event\\GuardEvent` class.
+This class has these additonal methods:
 
 :method:`Symfony\\Component\\Workflow\\Event\\GuardEvent::isBlocked`
     Returns if transition is blocked.
@@ -468,29 +493,108 @@ Alternatively, you can define a ``guard`` configuration option for the
 transition. The value of this option is any valid expression created with the
 :doc:`ExpressionLanguage component </components/expression_language>`:
 
-.. code-block:: yaml
+.. configuration-block::
 
-    # config/packages/workflow.yaml
-    framework:
-        workflows:
-            blog_publishing:
-                # previous configuration
-                transitions:
-                    to_review:
-                        # the transition is allowed only if the current user has the ROLE_REVIEWER role.
-                        guard: "is_granted('ROLE_REVIEWER')"
-                        from: draft
-                        to:   reviewed
-                    publish:
-                        # or "is_anonymous", "is_remember_me", "is_fully_authenticated", "is_granted", "is_valid"
-                        guard: "is_authenticated"
-                        from: reviewed
-                        to:   published
-                    reject:
-                        # or any valid expression language with "subject" referring to the supported object
-                        guard: "has_role('ROLE_ADMIN') and subject.isRejectable()"
-                        from: reviewed
-                        to:   rejected
+    .. code-block:: yaml
+
+        # config/packages/workflow.yaml
+        framework:
+            workflows:
+                blog_publishing:
+                    # previous configuration
+                    transitions:
+                        to_review:
+                            # the transition is allowed only if the current user has the ROLE_REVIEWER role.
+                            guard: "is_granted('ROLE_REVIEWER')"
+                            from: draft
+                            to:   reviewed
+                        publish:
+                            # or "is_anonymous", "is_remember_me", "is_fully_authenticated", "is_granted", "is_valid"
+                            guard: "is_authenticated"
+                            from: reviewed
+                            to:   published
+                        reject:
+                            # or any valid expression language with "subject" referring to the supported object
+                            guard: "is_granted('ROLE_ADMIN') and subject.isRejectable()"
+                            from: reviewed
+                            to:   rejected
+
+    .. code-block:: xml
+
+        <!-- config/packages/workflow.xml -->
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <container xmlns="http://symfony.com/schema/dic/services"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:framework="http://symfony.com/schema/dic/symfony"
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+            https://symfony.com/schema/dic/services/services-1.0.xsd
+            http://symfony.com/schema/dic/symfony
+            https://symfony.com/schema/dic/symfony/symfony-1.0.xsd">
+
+            <framework:config>
+                <framework:workflow name="blog_publishing" type="workflow">
+
+                    <!-- ... previous configuration -->
+
+                    <framework:transition name="to_review">
+                        <!-- the transition is allowed only if the current user has the ROLE_REVIEWER role. -->
+                        <framework:guard>is_granted("ROLE_REVIEWER")</framework:guard>
+                        <framework:from>draft</framework:from>
+                        <framework:to>reviewed</framework:to>
+                    </framework:transition>
+
+                    <framework:transition name="publish">
+                        <!-- or "is_anonymous", "is_remember_me", "is_fully_authenticated", "is_granted" -->
+                        <framework:guard>is_authenticated</framework:guard>
+                        <framework:from>reviewed</framework:from>
+                        <framework:to>published</framework:to>
+                    </framework:transition>
+
+                    <framework:transition name="reject">
+                        <!-- or any valid expression language with "subject" referring to the post -->
+                        <framework:guard>is_granted("ROLE_ADMIN") and subject.isStatusReviewed()</framework:guard>
+                        <framework:from>reviewed</framework:from>
+                        <framework:to>rejected</framework:to>
+                    </framework:transition>
+
+                </framework:workflow>
+
+            </framework:config>
+        </container>
+
+    .. code-block:: php
+
+        // config/packages/workflow.php
+        use App\Entity\BlogPost;
+
+        $container->loadFromExtension('framework', [
+            'workflows' => [
+                'blog_publishing' => [
+                    // ... previous configuration
+
+                    'transitions' => [
+                        'to_review' => [
+                            // the transition is allowed only if the current user has the ROLE_REVIEWER role.
+                            'guard' => 'is_granted("ROLE_REVIEWER")',
+                            'from' => 'draft',
+                            'to' => 'reviewed',
+                        ],
+                        'publish' => [
+                            // or "is_anonymous", "is_remember_me", "is_fully_authenticated", "is_granted"
+                            'guard' => 'is_authenticated',
+                            'from' => 'reviewed',
+                            'to' => 'published',
+                        ],
+                        'reject' => [
+                            // or any valid expression language with "subject" referring to the post
+                            'guard' => 'is_granted("ROLE_ADMIN") and subject.isStatusReviewed()',
+                            'from' => 'reviewed',
+                            'to' => 'rejected',
+                        ],
+                    ],
+                ],
+            ],
+        ]);
 
 You can also use transition blockers to block and return a user-friendly error
 message when you stop a transition from happening.
@@ -499,7 +603,7 @@ In the example we get this message from the
 central place to manage the text.
 
 This example has been simplified; in production you may prefer to use the
-:doc:`Translation </components/translation>` component to manage messages in one
+:doc:`Translation </translation>` component to manage messages in one
 place::
 
     namespace App\Listener\Workflow\Task;

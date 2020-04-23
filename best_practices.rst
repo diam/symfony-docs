@@ -10,7 +10,8 @@ You can even ignore them completely and continue using your own best practices
 and methodologies. Symfony is flexible enough to adapt to your needs.
 
 This article assumes that you already have experience developing Symfony
-applications. If you don't, read first the rest of the `Symfony documentation`_.
+applications. If you don't, read first the :doc:`Getting Started </setup>`
+section of the documentation.
 
 .. tip::
 
@@ -86,6 +87,12 @@ application behavior.
 
 :ref:`Use env vars in your project <config-env-vars>` to define these options
 and create multiple ``.env`` files to :ref:`configure env vars per environment <config-dot-env>`.
+
+Use Secret for Sensitive Information
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When your application has sensitive configuration - like an API key - you should
+store those securely via :doc:`secrets </configuration/secrets>`.
 
 Use Parameters for Application Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -434,7 +441,6 @@ That's why it's recommended to use raw URLs in tests instead of generating them
 from routes. Whenever a route changes, tests will break and you'll know that
 you must set up a redirection.
 
-.. _`Symfony documentation`: https://symfony.com/doc
 .. _`Symfony Demo`: https://github.com/symfony/demo
 .. _`download Symfony`: https://symfony.com/download
 .. _`Composer`: https://getcomposer.org/

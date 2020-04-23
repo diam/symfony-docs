@@ -85,12 +85,15 @@ is the service id of your user checker:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
-                <firewall name="main" pattern="^/">
-                    <user-checker>App\Security\UserChecker</user-checker>
+                <firewall name="main"
+                        pattern="^/"
+                        user-checker="App\Security\UserChecker">
                     <!-- ... -->
                 </firewall>
             </config>
@@ -99,11 +102,10 @@ is the service id of your user checker:
     .. code-block:: php
 
         // config/packages/security.php
-
-        // ...
         use App\Security\UserChecker;
 
         $container->loadFromExtension('security', [
+            // ...
             'firewalls' => [
                 'main' => [
                     'pattern' => '^/',

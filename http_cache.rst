@@ -137,7 +137,7 @@ method::
 
     class CacheKernel extends HttpCache
     {
-        protected function getOptions()
+        protected function getOptions(): array
         {
             return [
                 'default_ttl' => 0,
@@ -342,15 +342,27 @@ the most useful ones::
 Additionally, most cache-related HTTP headers can be set via the single
 :method:`Symfony\\Component\\HttpFoundation\\Response::setCache` method::
 
-    // sets cache settings in one call
+    // use this method to set several cache settings in one call
+    // (this example lists all the available cache settings)
     $response->setCache([
-        'etag'          => $etag,
-        'last_modified' => $date,
-        'max_age'       => 10,
-        's_maxage'      => 10,
-        'public'        => true,
-        // 'private'    => true,
+        'must_revalidate'  => false,
+        'no_cache'         => false,
+        'no_store'         => false,
+        'no_transform'     => false,
+        'public'           => true,
+        'private'          => false,
+        'proxy_revalidate' => false,
+        'max_age'          => 600,
+        's_maxage'         => 600,
+        'immutable'        => true,
+        'last_modified'    => new \DateTime(),
+        'etag'             => 'abcdef'
     ]);
+
+.. versionadded:: 5.1
+
+    The ``must_revalidate``, ``no_cache``, ``no_store``, ``no_transform`` and
+    ``proxy_revalidate`` directives were introduced in Symfony 5.1.
 
 Cache Invalidation
 ------------------
@@ -409,11 +421,11 @@ Learn more
 
     http_cache/*
 
-.. _`Things Caches Do`: http://2ndscale.com/writings/things-caches-do
-.. _`Cache Tutorial`: http://www.mnot.net/cache_docs/
-.. _`Varnish`: https://www.varnish-cache.org/
-.. _`Squid in reverse proxy mode`: http://wiki.squid-cache.org/SquidFaq/ReverseProxy
+.. _`Things Caches Do`: https://2ndscale.com/writings/things-caches-do
+.. _`Cache Tutorial`: https://www.mnot.net/cache_docs/
+.. _`Varnish`: https://varnish-cache.org/
+.. _`Squid in reverse proxy mode`: https://wiki.squid-cache.org/SquidFaq/ReverseProxy
 .. _`RFC 7234 - Caching`: https://tools.ietf.org/html/rfc7234
 .. _`RFC 7232 - Conditional Requests`: https://tools.ietf.org/html/rfc7232
-.. _`FOSHttpCacheBundle`: http://foshttpcachebundle.readthedocs.org/
+.. _`FOSHttpCacheBundle`: https://foshttpcachebundle.readthedocs.org/
 .. _`they can be cached`: https://tools.ietf.org/html/draft-ietf-httpbis-p2-semantics-20#section-2.3.4

@@ -98,6 +98,16 @@ For third-party providers, refer to the following table:
  Sendgrid             sendgrid+smtp://apikey:KEY@default         n/a                                         sendgrid+api://KEY@default
 ==================== ========================================== =========================================== ========================================
 
+.. note::
+
+    When using SMTP, the default timeout for sending a message before throwing an
+    exception is the value defined in the `default_socket_timeout`_ PHP.ini option.
+
+    .. versionadded:: 5.1
+
+        The usage of ``default_socket_timeout`` as the default timeout was
+        introduced in Symfony 5.1.
+
 Instead of choosing a specific protocol, you can also let Symfony pick the
 best one by omitting it from the scheme: for instance, ``mailgun://KEY:DOMAIN@default``
 is equivalent to ``mailgun+https://KEY:DOMAIN@default``.
@@ -138,9 +148,28 @@ A round-robin transport is configured with two or more transports and the
 
     $dsn = 'roundrobin(postmark+api://ID@default sendgrid+smtp://KEY@default)'
 
-The mailer will start using the first transport and if it fails, it will retry
-the same delivery with the next transports until one of them succeeds (or until
-all of them fail).
+The mailer will start using a randomly selected transport and if it fails, it
+will retry the same delivery with the next transports until one of them succeeds
+(or until all of them fail).
+
+.. versionadded:: 5.1
+
+    The random selection of the first transport was introduced in Symfony 5.1.
+    In previous Symfony versions the first transport was always selected first.
+
+TLS Peer Verification
+---------------------
+
+By default, SMTP transports perform TLS peer verification. This behavior is
+configurable with the ``verify_peer`` option. Although it's not recommended to
+disable this verification for security reasons, it can be useful while developing
+the application or when using a self-signed certificate::
+
+    $dsn = 'smtp://user:pass@smtp.example.com?verify_peer=false'
+
+.. versionadded:: 5.1
+
+    The ``verify_peer`` option was introduced in Symfony 5.1.
 
 Sending emails asynchronously
 -----------------------------
@@ -194,3 +223,4 @@ To learn more about how to use the mailer component, refer to the
 
 .. _`high availability`: https://en.wikipedia.org/wiki/High_availability
 .. _`load balancing`: https://en.wikipedia.org/wiki/Load_balancing_(computing)
+.. _`default_socket_timeout`: https://www.php.net/manual/en/filesystem.configuration.php#ini.default-socket-timeout

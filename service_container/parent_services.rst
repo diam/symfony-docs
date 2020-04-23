@@ -12,7 +12,7 @@ you may have multiple repository classes which need the
     // src/Repository/BaseDoctrineRepository.php
     namespace App\Repository;
 
-    use Doctrine\Common\Persistence\ObjectManager;
+    use Doctrine\Persistence\ObjectManager;
     use Psr\Log\LoggerInterface;
 
     // ...
@@ -150,12 +150,6 @@ be called when ``App\Repository\DoctrineUserRepository`` is instantiated.
 All attributes on the parent service are shared with the child **except** for
 ``shared``, ``abstract`` and ``tags``. These are *not* inherited from the parent.
 
-.. note::
-
-    If you have a ``_defaults`` section in your file, all child services are required
-    to explicitly override those values to avoid ambiguity. You will see a clear
-    error message about this.
-
 .. tip::
 
     In the examples shown, the classes sharing the same configuration also
@@ -181,8 +175,8 @@ the child class:
             App\Repository\DoctrineUserRepository:
                 parent: App\Repository\BaseDoctrineRepository
 
-                # overrides the public setting of the parent service
-                public: false
+                # overrides the private setting of the parent service
+                public: true
 
                 # appends the '@app.username_checker' argument to the parent
                 # argument list
@@ -207,10 +201,10 @@ the child class:
             <services>
                 <!-- ... -->
 
-                <!-- overrides the public setting of the parent service -->
+                <!-- overrides the private setting of the parent service -->
                 <service id="App\Repository\DoctrineUserRepository"
                     parent="App\Repository\BaseDoctrineRepository"
-                    public="false"
+                    public="true"
                 >
                     <!-- appends the '@app.username_checker' argument to the parent
                          argument list -->
@@ -248,8 +242,8 @@ the child class:
             $services->set(DoctrineUserRepository::class)
                 ->parent(BaseDoctrineRepository::class)
 
-                // overrides the public setting of the parent service
-                ->private()
+                // overrides the private setting of the parent service
+                ->public()
 
                 // appends the '@app.username_checker' argument to the parent
                 // argument list

@@ -126,7 +126,9 @@ exists in your project::
 Now, if you want to serialize this object into JSON, you only need to
 use the Serializer service created before::
 
-    $person = new App\Model\Person();
+    use App\Model\Person;
+
+    $person = new Person();
     $person->setName('foo');
     $person->setAge(99);
     $person->setSportsperson(false);
@@ -672,11 +674,11 @@ There are several types of normalizers available:
 :class:`Symfony\\Component\\Serializer\\Normalizer\\ObjectNormalizer`
     This normalizer leverages the :doc:`PropertyAccess Component </components/property_access>`
     to read and write in the object. It means that it can access to properties
-    directly and through getters, setters, hassers, adders and removers. It supports
+    directly and through getters, setters, hassers, issers, adders and removers. It supports
     calling the constructor during the denormalization process.
 
     Objects are normalized to a map of property names and values (names are
-    generated removing the ``get``, ``set``, ``has``, ``is`` or ``remove`` prefix from
+    generated removing the ``get``, ``set``, ``has``, ``is``, ``add`` or ``remove`` prefix from
     the method name and transforming the first letter to lowercase; e.g.
     ``getFirstName()`` -> ``firstName``).
 
@@ -785,9 +787,6 @@ The ``CsvEncoder``
 ~~~~~~~~~~~~~~~~~~~
 
 The ``CsvEncoder`` encodes to and decodes from CSV.
-
-You can pass the context key ``as_collection`` in order to have the results
-always as a collection.
 
 The ``XmlEncoder``
 ~~~~~~~~~~~~~~~~~~
@@ -1465,7 +1464,7 @@ Learn more
 .. _RFC3339: https://tools.ietf.org/html/rfc3339#section-5.8
 .. _JSON: http://www.json.org/
 .. _XML: https://www.w3.org/XML/
-.. _YAML: http://yaml.org/
+.. _YAML: https://yaml.org/
 .. _CSV: https://tools.ietf.org/html/rfc4180
 .. _`RFC 7807`: https://tools.ietf.org/html/rfc7807
 .. _`Value Objects`: https://en.wikipedia.org/wiki/Value_object

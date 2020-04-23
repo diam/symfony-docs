@@ -168,7 +168,7 @@ the value returned for the expected WSSE information, creates a token using
 that information, and passes the token on to the authentication manager. If
 the proper information is not provided, or the authentication manager throws
 an :class:`Symfony\\Component\\Security\\Core\\Exception\\AuthenticationException`,
-a 403 Response is returned.
+a 401 Response is returned.
 
 .. note::
 
@@ -184,7 +184,7 @@ a 403 Response is returned.
 
     Returning prematurely from the listener is relevant only if you want to chain
     authentication providers (for example to allow anonymous users). If you want
-    to forbid access to anonymous users and have a nice 403 error, you should set
+    to forbid access to anonymous users and have a 404 error, you should set
     the status code of the response before returning.
 
 The Authentication Provider
@@ -396,11 +396,9 @@ to service ids that may not exist yet: ``App\Security\Authentication\Provider\Ws
             App\Security\Authentication\Provider\WsseProvider:
                 arguments:
                     $cachePool: '@cache.app'
-                public: false
 
             App\Security\Firewall\WsseListener:
                 arguments: ['@security.token_storage', '@security.authentication.manager']
-                public: false
 
     .. code-block:: xml
 
@@ -411,15 +409,11 @@ to service ids that may not exist yet: ``App\Security\Authentication\Provider\Ws
             xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
 
             <services>
-                <service id="App\Security\Authentication\Provider\WsseProvider"
-                    public="false"
-                >
+                <service id="App\Security\Authentication\Provider\WsseProvider">
                     <argument key="$cachePool" type="service" id="cache.app"></argument>
                 </service>
 
-                <service id="App\Security\Firewall\WsseListener"
-                    public="false"
-                >
+                <service id="App\Security\Firewall\WsseListener">
                     <argument type="service" id="security.token_storage"/>
                     <argument type="service" id="security.authentication.manager"/>
                 </service>
@@ -428,21 +422,27 @@ to service ids that may not exist yet: ``App\Security\Authentication\Provider\Ws
 
     .. code-block:: php
 
-        // config/services.php
+         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\Security\Authentication\Provider\WsseProvider;
         use App\Security\Firewall\WsseListener;
         use Symfony\Component\DependencyInjection\Reference;
 
-        $container->register(WsseProvider::class)
-            ->setArgument('$cachePool', new Reference('cache.app'))
-            ->setPublic(false);
+        return function(ContainerConfigurator $configurator) {
+            $services = $configurator->services();
 
-        $container->register(WsseListener::class)
-            ->setArguments([
-                new Reference('security.token_storage'),
-                new Reference('security.authentication.manager'),
-            ])
-            ->setPublic(false);
+            $services->set(WsseProvider::class)
+                ->arg('$cachePool', ref('cache.app'))
+            ;
+
+            $services->set(WsseListener::class)
+                ->args([
+                    ref('security.token_storage'),
+                    ref('security.authentication.manager'),
+                ])
+            ;
+        };
 
 Now that your services are defined, tell your security context about your
 factory in the kernel::
@@ -488,7 +488,9 @@ You are finished! You can now define parts of your app as under WSSE protection.
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -604,7 +606,9 @@ set to any desirable value per firewall.
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -636,5 +640,5 @@ The rest is up to you! Any relevant configuration items can be defined
 in the factory and consumed or passed to the other classes in the container.
 
 
-.. _`WSSE`: http://www.xml.com/pub/a/2003/12/17/dive.html
+.. _`WSSE`: https://www.xml.com/pub/a/2003/12/17/dive.html
 .. _`nonce`: https://en.wikipedia.org/wiki/Cryptographic_nonce

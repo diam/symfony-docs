@@ -161,15 +161,14 @@ each test suite's results in their own section.
 Trigger Deprecation Notices
 ---------------------------
 
-Deprecation notices can be triggered by using::
+Deprecation notices can be triggered by using ``trigger_deprecation`` from
+the ``symfony/deprecation-contracts`` package::
 
-    @trigger_error('Your deprecation message', E_USER_DEPRECATED);
+    // indicates something is deprecated since version 1.3 of vendor-name/packagename
+    trigger_deprecation('vendor-name/package-name', '1.3', 'Your deprecation message');
 
-Without the `@-silencing operator`_, users would need to opt-out from deprecation
-notices. Silencing by default swaps this behavior and allows users to opt-in
-when they are ready to cope with them (by adding a custom error handler like the
-one provided by this bridge). When not silenced, deprecation notices will appear
-in the **Unsilenced** section of the deprecation report.
+    // you can also use printf format (all arguments after the message will be used)
+    trigger_deprecation('...', '1.3', 'Value "%s" is deprecated, use ...  instead.', $value);
 
 Mark Tests as Legacy
 --------------------
@@ -223,9 +222,9 @@ message contains the ``"foobar"`` string.
 Making Tests Fail
 ~~~~~~~~~~~~~~~~~
 
-By default, any non-legacy-tagged or any non-`@-silenced`_ deprecation
-notices will make tests fail. Alternatively, you can configure an
-arbitrary threshold by setting ``SYMFONY_DEPRECATIONS_HELPER`` to
+By default, any non-legacy-tagged or any non-`@-silenced <@-silencing operator>`_
+deprecation notices will make tests fail. Alternatively, you can configure
+an arbitrary threshold by setting ``SYMFONY_DEPRECATIONS_HELPER`` to
 ``max[total]=320`` for instance. It will make the tests fails only if a
 higher number of deprecation notices is reached (``0`` is the default
 value).
@@ -335,22 +334,40 @@ Write Assertions about Deprecations
 
 When adding deprecations to your code, you might like writing tests that verify
 that they are triggered as required. To do so, the bridge provides the
-``@expectedDeprecation`` annotation that you can use on your test methods.
+``expectDeprecation()`` method that you can use on your test methods.
 It requires you to pass the expected message, given in the same format as for
 the `PHPUnit's assertStringMatchesFormat()`_ method. If you expect more than one
-deprecation message for a given test method, you can use the annotation several
+deprecation message for a given test method, you can use the method several
 times (order matters)::
 
-    /**
-     * @group legacy
-     * @expectedDeprecation This "%s" method is deprecated.
-     * @expectedDeprecation The second argument of the "%s" method is deprecated.
-     */
-    public function testDeprecatedCode()
+    use PHPUnit\Framework\TestCase;
+    use Symfony\Bridge\PhpUnit\ExpectDeprecationTrait;
+
+    class MyTest extends TestCase
     {
-        @trigger_error('This "Foo" method is deprecated.', E_USER_DEPRECATED);
-        @trigger_error('The second argument of the "Bar" method is deprecated.', E_USER_DEPRECATED);
+        use ExpectDeprecationTrait;
+
+        /**
+         * @group legacy
+         */
+        public function testDeprecatedCode()
+        {
+            // test some code that triggers the following deprecation:
+            // trigger_deprecation('vendor-name/package-name', '5.1', 'This "Foo" method is deprecated.');
+            $this->expectDeprecation('Since vendor-name/package-name 5.1: This "%s" method is deprecated');
+
+            // ...
+
+            // test some code that triggers the following deprecation:
+            // trigger_deprecation('vendor-name/package-name', '4.4', 'The second argument of the "Bar" method is deprecated.');
+            $this->expectDeprecation('Since vendor-name/package-name 4.4: The second argument of the "%s" method is deprecated.');
+        }
     }
+
+.. deprecated:: 5.1
+
+    Symfony versions previous to 5.1 also included a ``@expectedDeprecation``
+    annotation to test deprecations, but it was deprecated in favor of the method.
 
 Display the Full Stack Trace
 ----------------------------
@@ -741,7 +758,7 @@ Troubleshooting
 The ``@group time-sensitive`` and ``@group dns-sensitive`` annotations work
 "by convention" and assume that the namespace of the tested class can be
 obtained just by removing the ``Tests\`` part from the test namespace. I.e.
-that if the your test case fully-qualified class name (FQCN) is
+if your test cases fully-qualified class name (FQCN) is
 ``App\Tests\Watch\DummyWatchTest``, it assumes the tested class namespace
 is ``App\Watch``.
 
@@ -936,7 +953,7 @@ your application, you can use your own SUT (System Under Test) solver:
     </listeners>
 
 The ``My\Namespace\SutSolver::solve`` can be any PHP callable and receives the
-current test classname as its first argument.
+current test as its first argument.
 
 Finally, the listener can also display warning messages when the SUT solver does
 not find the SUT:
@@ -955,11 +972,10 @@ not find the SUT:
 .. _`PHPUnit`: https://phpunit.de
 .. _`PHPUnit event listener`: https://phpunit.de/manual/current/en/extending-phpunit.html#extending-phpunit.PHPUnit_Framework_TestListener
 .. _`PHPUnit's assertStringMatchesFormat()`: https://phpunit.de/manual/current/en/appendixes.assertions.html#appendixes.assertions.assertStringMatchesFormat
-.. _`PHP error handler`: https://php.net/manual/en/book.errorfunc.php
+.. _`PHP error handler`: https://www.php.net/manual/en/book.errorfunc.php
 .. _`environment variable`: https://phpunit.de/manual/current/en/appendixes.configuration.html#appendixes.configuration.php-ini-constants-variables
-.. _`@-silencing operator`: https://php.net/manual/en/language.operators.errorcontrol.php
-.. _`@-silenced`: https://php.net/manual/en/language.operators.errorcontrol.php
+.. _`@-silencing operator`: https://www.php.net/manual/en/language.operators.errorcontrol.php
 .. _`Travis CI`: https://travis-ci.org/
 .. _`test listener`: https://phpunit.de/manual/current/en/appendixes.configuration.html#appendixes.configuration.test-listeners
 .. _`@covers`: https://phpunit.de/manual/current/en/appendixes.annotations.html#appendixes.annotations.covers
-.. _`PHP namespace resolutions rules`: https://php.net/manual/en/language.namespaces.rules.php
+.. _`PHP namespace resolutions rules`: https://www.php.net/manual/en/language.namespaces.rules.php

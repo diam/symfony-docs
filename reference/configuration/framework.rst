@@ -227,6 +227,7 @@ Configuration
   * `cache_dir`_
   * :ref:`default_path <reference-translator-default_path>`
   * :ref:`enabled <reference-translator-enabled>`
+  * :ref:`enabled_locales <reference-translator-enabled-locales>`
   * `fallbacks`_
   * `formatter`_
   * `logging`_
@@ -778,16 +779,16 @@ every request.
 
 Here are some common examples of how ``base_uri`` merging works in practice:
 
-===================  ==============  ======================
-``base_uri``         Relative URI    Actual Requested URI
-===================  ==============  ======================
-http://foo.com       /bar            http://foo.com/bar
-http://foo.com/foo   /bar            http://foo.com/bar
-http://foo.com/foo   bar             http://foo.com/bar
-http://foo.com/foo/  bar             http://foo.com/foo/bar
-http://foo.com       http://baz.com  http://baz.com
-http://foo.com/?bar  bar             http://foo.com/bar
-===================  ==============  ======================
+=======================  ==================  ==========================
+``base_uri``             Relative URI        Actual Requested URI
+=======================  ==================  ==========================
+http://example.org       /bar                http://example.org/bar
+http://example.org/foo   /bar                http://example.org/bar
+http://example.org/foo   bar                 http://example.org/bar
+http://example.org/foo/  bar                 http://example.org/foo/bar
+http://example.org       http://symfony.com  http://symfony.com
+http://example.org/?bar  bar                 http://example.org/bar
+=======================  ==================  ==========================
 
 bindto
 ......
@@ -1172,6 +1173,11 @@ utf8
 
 **type**: ``boolean`` **default**: ``false``
 
+.. deprecated:: 5.1
+
+    Not setting this option is deprecated since Symfony 5.1. Moreover, the
+    default value of this option will change to ``true`` in Symfony 6.0.
+
 When this option is set to ``true``, the regular expressions used in the
 :ref:`requirements of route parameters <routing-requirements>` will be run
 using the `utf-8 modifier`_. This will for example match any UTF-8 character
@@ -1205,6 +1211,54 @@ The service id used for session storage. The default ``null`` value means to use
 the native PHP session mechanism. Set it to ``'session.handler.native_file'`` to
 let Symfony manage the sessions itself using files to store the session
 metadata.
+
+You can also configure the session handler with a DSN. For example:
+
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # config/packages/framework.yaml
+        framework:
+            session:
+                # ...
+                handler_id: 'redis://localhost'
+                handler_id: '%env(REDIS_URL)%'
+                handler_id: '%env(DATABASE_URL)%'
+                handler_id: 'file://%kernel.project_dir%/var/sessions'
+
+    .. code-block:: xml
+
+        <!-- config/packages/framework.xml -->
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <container xmlns="http://symfony.com/schema/dic/services"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:framework="http://symfony.com/schema/dic/symfony"
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/symfony https://symfony.com/schema/dic/symfony/symfony-1.0.xsd">
+
+            <framework:config>
+                <framework:session enabled="true"
+                    handler-id="redis://localhost"
+                    handler-id="%env(REDIS_URL)%"
+                    handler-id="%env(DATABASE_URL)%"
+                    handler-id="file://%kernel.project_dir%/var/sessions"/>
+            </framework:config>
+        </container>
+
+    .. code-block:: php
+
+        // config/packages/framework.php
+        $container->loadFromExtension('framework', [
+            'session' => [
+                // ...
+                'handler_id' => 'redis://localhost',
+                'handler_id' => '%env(REDIS_URL)%',
+                'handler_id' => '%env(DATABASE_URL)%',
+                'handler_id' => 'file://%kernel.project_dir%/var/sessions',
+            ],
+        ]);
 
 If you prefer to make Symfony store sessions in a database read
 :doc:`/doctrine/pdo_session_storage`.
@@ -1442,12 +1496,9 @@ metadata_update_threshold
 
 **type**: ``integer`` **default**: ``0``
 
-This is how many seconds to wait between updating/writing the session metadata. This
-can be useful if, for some reason, you want to limit the frequency at which the
-session persists.
-
-Starting in Symfony 3.4, session data is *only* written when the session data has
-changed. Previously, you needed to set this option to avoid that behavior.
+This is how many seconds to wait between updating/writing the session metadata.
+This can be useful if, for some reason, you want to limit the frequency at which
+the session persists, instead of doing that on every request.
 
 .. _reference-session-enabled:
 
@@ -1876,10 +1927,11 @@ json_manifest_path
 
 **type**: ``string`` **default**: ``null``
 
-The file path to a ``manifest.json`` file containing an associative array of asset
-names and their respective compiled names. A common cache-busting technique using
-a "manifest" file works by writing out assets with a "hash" appended to their
-file names (e.g. ``main.ae433f1cb.css``) during a front-end compilation routine.
+The file path or absolute URL to a ``manifest.json`` file containing an
+associative array of asset names and their respective compiled names. A common
+cache-busting technique using a "manifest" file works by writing out assets with
+a "hash" appended to their file names (e.g. ``main.ae433f1cb.css``) during a
+front-end compilation routine.
 
 .. tip::
 
@@ -1900,6 +1952,8 @@ package:
             assets:
                 # this manifest is applied to every asset (including packages)
                 json_manifest_path: "%kernel.project_dir%/public/build/manifest.json"
+                # you can use absolute URLs too and Symfony will download them automatically
+                # json_manifest_path: 'https://cdn.example.com/manifest.json'
                 packages:
                     foo_package:
                         # this package uses its own manifest (the default file is ignored)
@@ -1921,6 +1975,8 @@ package:
             <framework:config>
                 <!-- this manifest is applied to every asset (including packages) -->
                 <framework:assets json-manifest-path="%kernel.project_dir%/public/build/manifest.json">
+                <!-- you can use absolute URLs too and Symfony will download them automatically -->
+                <!-- <framework:assets json-manifest-path="https://cdn.example.com/manifest.json"> -->
                     <!-- this package uses its own manifest (the default file is ignored) -->
                     <framework:package
                         name="foo_package"
@@ -1940,6 +1996,8 @@ package:
             'assets' => [
                 // this manifest is applied to every asset (including packages)
                 'json_manifest_path' => '%kernel.project_dir%/public/build/manifest.json',
+                // you can use absolute URLs too and Symfony will download them automatically
+                // 'json_manifest_path' => 'https://cdn.example.com/manifest.json',
                 'packages' => [
                     'foo_package' => [
                         // this package uses its own manifest (the default file is ignored)
@@ -1953,6 +2011,11 @@ package:
             ],
         ]);
 
+.. versionadded:: 5.1
+
+    The option to use an absolute URL in  ``json_manifest_path`` was introduced
+    in Symfony 5.1.
+
 .. note::
 
     This parameter cannot be set at the same time as ``version`` or ``version_strategy``.
@@ -1963,6 +2026,10 @@ package:
 
     If you request an asset that is *not found* in the ``manifest.json`` file, the original -
     *unmodified* - asset path will be returned.
+
+.. note::
+
+    If an URL is set, the JSON manifest is downloaded on each request using the `http_client`_.
 
 translator
 ~~~~~~~~~~
@@ -1983,6 +2050,63 @@ enabled
 **type**: ``boolean`` **default**: ``true`` or ``false`` depending on your installation
 
 Whether or not to enable the ``translator`` service in the service container.
+
+.. _reference-translator-enabled-locales:
+
+enabled_locales
+...............
+
+**type**: ``array`` **default**: ``[]`` (empty array = enable all locales)
+
+.. versionadded:: 5.1
+
+    The ``enabled_locales`` option was introduced in Symfony 5.1.
+
+Symfony applications generate by default the translation files for validation
+and security messages in all locales. If your application only uses some
+locales, use this option to restrict the files generated by Symfony and improve
+performance a bit:
+
+.. configuration-block::
+
+    .. code-block:: yaml
+
+        # config/packages/translation.yaml
+        framework:
+            translation:
+                enabled_locales: ['en', 'es']
+
+    .. code-block:: xml
+
+        <!-- config/packages/translation.xml -->
+        <?xml version="1.0" encoding="UTF-8" ?>
+        <container xmlns="http://symfony.com/schema/dic/services"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xmlns:framework="http://symfony.com/schema/dic/symfony"
+            xsi:schemaLocation="http://symfony.com/schema/dic/services
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/symfony https://symfony.com/schema/dic/symfony/symfony-1.0.xsd">
+
+            <framework:config>
+                <framework:translation>
+                    <enabled-locale>en</enabled-locale>
+                    <enabled-locale>es</enabled-locale>
+                </framework:translation>
+            </framework:config>
+        </container>
+
+    .. code-block:: php
+
+        // config/packages/translation.php
+        $container->loadFromExtension('framework', [
+            'translation' => [
+                'enabled_locales' => ['en', 'es'],
+            ],
+        ]);
+
+If some user makes requests with a locale not included in this option, the
+application won't display any error because Symfony will display contents using
+the fallback locale.
 
 .. _fallback:
 
@@ -2019,10 +2143,6 @@ formatter
 
 The ID of the service used to format translation messages. The service class
 must implement the :class:`Symfony\\Component\\Translation\\Formatter\\MessageFormatterInterface`.
-
-.. seealso::
-
-    For more details, see :doc:`/components/translation/custom_message_formatter`.
 
 .. _reference-translator-paths:
 
@@ -2122,10 +2242,10 @@ If this option is enabled, validation constraints can be defined using annotatio
 translation_domain
 ..................
 
-**type**: ``string`` **default**: ``validators``
+**type**: ``string | false`` **default**: ``validators``
 
 The translation domain that is used when translating validation constraint
-error messages.
+error messages. Use false to disable translations.
 
 .. _reference-validation-not-compromised-password:
 
@@ -2196,7 +2316,7 @@ mapping
 paths
 """""
 
-**type**: ``array`` **default**: ``[]``
+**type**: ``array`` **default**: ``['config/validation/']``
 
 This option allows to define an array of paths with files or directories where
 the component will look for additional validation files:
@@ -2210,7 +2330,7 @@ the component will look for additional validation files:
             validation:
                 mapping:
                     paths:
-                        - "%kernel.project_dir%/validation/"
+                        - "%kernel.project_dir%/config/validation/"
 
     .. code-block:: xml
 
@@ -2226,7 +2346,7 @@ the component will look for additional validation files:
             <framework:config>
                 <framework:validation>
                     <framework:mapping>
-                        <framework:path>%kernel.project_dir%/validation</framework:path>
+                        <framework:path>%kernel.project_dir%/config/validation/</framework:path>
                     </framework:mapping>
                 </framework:validation>
             </framework:config>
@@ -2239,7 +2359,7 @@ the component will look for additional validation files:
             'validation' => [
                 'mapping' => [
                     'paths' => [
-                        '%kernel.project_dir%/validation',
+                        '%kernel.project_dir%/config/validation/',
                     ],
                 ],
             ],
@@ -2746,7 +2866,7 @@ Name of the lock you want to create.
         lock.invoice.retry_till_save.store:
             class: Symfony\Component\Lock\Store\RetryTillSaveStore
             decorates: lock.invoice.store
-            arguments: ['@lock.invoice.retry.till.save.store.inner', 100, 50]
+            arguments: ['@.inner', 100, 50]
 
 workflows
 ~~~~~~~~~
@@ -2899,25 +3019,25 @@ Defines the kind of workflow that is going to be created, which can be either
 a normal workflow or a state machine. Read :doc:`this article </workflow/workflow-and-state-machine>`
 to know their differences.
 
-.. _`HTTP Host header attacks`: http://www.skeletonscribe.net/2013/05/practical-http-host-header-attacks.html
+.. _`HTTP Host header attacks`: https://www.skeletonscribe.net/2013/05/practical-http-host-header-attacks.html
 .. _`Security Advisory Blog post`: https://symfony.com/blog/security-releases-symfony-2-0-24-2-1-12-2-2-5-and-2-3-3-released#cve-2013-4752-request-gethost-poisoning
-.. _`Doctrine Cache`: http://docs.doctrine-project.org/projects/doctrine-common/en/latest/reference/caching.html
+.. _`Doctrine Cache`: https://www.doctrine-project.org/projects/doctrine-cache/en/current/index.html
 .. _`egulias/email-validator`: https://github.com/egulias/EmailValidator
 .. _`RFC 5322`: https://tools.ietf.org/html/rfc5322
 .. _`PhpStormProtocol`: https://github.com/aik099/PhpStormProtocol
 .. _`phpstorm-url-handler`: https://github.com/sanduhrs/phpstorm-url-handler
-.. _`blue/green deployment`: http://martinfowler.com/bliki/BlueGreenDeployment.html
+.. _`blue/green deployment`: https://martinfowler.com/bliki/BlueGreenDeployment.html
 .. _`gulp-rev`: https://www.npmjs.com/package/gulp-rev
 .. _`webpack-manifest-plugin`: https://www.npmjs.com/package/webpack-manifest-plugin
-.. _`error_reporting PHP option`: https://secure.php.net/manual/en/errorfunc.configuration.php#ini.error-reporting
+.. _`error_reporting PHP option`: https://www.php.net/manual/en/errorfunc.configuration.php#ini.error-reporting
 .. _`CSRF security attacks`: https://en.wikipedia.org/wiki/Cross-site_request_forgery
-.. _`session.sid_length PHP option`: https://php.net/manual/session.configuration.php#ini.session.sid-length
-.. _`session.sid_bits_per_character PHP option`: https://php.net/manual/session.configuration.php#ini.session.sid-bits-per-character
+.. _`session.sid_length PHP option`: https://www.php.net/manual/session.configuration.php#ini.session.sid-length
+.. _`session.sid_bits_per_character PHP option`: https://www.php.net/manual/session.configuration.php#ini.session.sid-bits-per-character
 .. _`X-Robots-Tag HTTP header`: https://developers.google.com/search/reference/robots_meta_tag
 .. _`RFC 3986`: https://www.ietf.org/rfc/rfc3986.txt
-.. _`default_socket_timeout`: https://php.net/manual/en/filesystem.configuration.php#ini.default-socket-timeout
+.. _`default_socket_timeout`: https://www.php.net/manual/en/filesystem.configuration.php#ini.default-socket-timeout
 .. _`PEM formatted`: https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail
 .. _`haveibeenpwned.com`: https://haveibeenpwned.com/
 .. _`session.cache-limiter`: https://www.php.net/manual/en/session.configuration.php#ini.session.cache-limiter
-.. _`Microsoft NTLM authentication protocol`: https://docs.microsoft.com/en-us/windows/desktop/secauthn/microsoft-ntlm
+.. _`Microsoft NTLM authentication protocol`: https://docs.microsoft.com/en-us/windows/win32/secauthn/microsoft-ntlm
 .. _`utf-8 modifier`: https://www.php.net/reference.pcre.pattern.modifiers

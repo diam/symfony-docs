@@ -12,6 +12,9 @@ integration, CSS inlining, file attachments and a lot more. Get them installed w
 
     $ composer require symfony/mailer
 
+
+.. _mailer-transport-setup:
+
 Transport Setup
 ---------------
 
@@ -71,7 +74,7 @@ The *only* part you need to change is to replace ``KEY`` in the ``MAILER_DSN`` (
 Each provider has different environment variables that the Mailer uses to
 configure the *actual* protocol, address and authentication for delivery. Some
 also have options that can be configured with query parameters at the end of the
-``MAILER_DSN`` - like ``?region=`` for Amazon SES. Some providers support
+``MAILER_DSN`` - like ``?region=`` for Amazon SES or Mailgun. Some providers support
 sending via ``http``, ``api`` or ``smtp``. Symfony chooses the best available
 transport, but you can force to use one:
 
@@ -117,9 +120,7 @@ and create an :class:`Symfony\\Component\\Mime\\Email` object::
                 ->text('Sending emails is fun again!')
                 ->html('<p>See Twig integration for better HTML integration!</p>');
 
-            /** @var Symfony\Component\Mailer\SentMessage $sentEmail */
-            $sentEmail = $mailer->send($email);
-            // $messageId = $sentEmail->getMessageId();
+            $mailer->send($email);
 
             // ...
         }
@@ -476,14 +477,14 @@ several popular libraries):
 .. code-block:: terminal
 
     # instead of league/commonmark, you can also use erusev/parsedown or michelf/php-markdown
-    $ composer require twig/markdown-extension league/commonmark
+    $ composer require twig/markdown-extra league/commonmark
 
-The extension adds a ``markdown`` filter, which you can use to convert parts or
+The extension adds a ``markdown_to_html`` filter, which you can use to convert parts or
 the entire email contents from Markdown to HTML:
 
 .. code-block:: twig
 
-    {% apply markdown %}
+    {% apply markdown_to_html %}
         Welcome {{ email.toName }}!
         ===========================
 
@@ -559,7 +560,7 @@ encrypt a signed message and/or to sign an encrypted message.
 Before signing/encrypting messages, make sure to have:
 
 * The `OpenSSL PHP extension`_ properly installed and configured;
-* A valid S/MIME security certificate.
+* A valid `S/MIME`_ security certificate.
 
 Signing Messages
 ~~~~~~~~~~~~~~~~
@@ -643,6 +644,32 @@ and it will select the appropriate certificate depending on the ``To`` option::
     $firstEncryptedEmail = $encrypter->encrypt($firstEmail);
     $secondEncryptedEmail = $encrypter->encrypt($secondEmail);
 
+Multiple Email Transports
+-------------------------
+
+You may want to use more than one mailer transport for delivery of your messages.
+This can be configured by replacing the ``dsn`` configuration entry with a
+``transports`` entry, like:
+
+.. code-block:: yaml
+
+    # config/packages/mailer.yaml
+    framework:
+        mailer:
+            transports:
+                main: '%env(MAILER_DSN)%'
+                alternative: '%env(MAILER_DSN_IMPORTANT)%'
+
+By default the first transport is used. The other transports can be used by
+adding a text header ``X-Transport`` to an email::
+
+    // Send using first "main" transport ...
+    $mailer->send($email);
+
+    // ... or use the "alternative" one
+    $email->getHeaders()->addTextHeader('X-Transport', 'alternative');
+    $mailer->send($email);
+
 Sending Messages Async
 ----------------------
 
@@ -704,31 +731,41 @@ you have a transport called ``async``, you can route the message there:
 Thanks to this, instead of being delivered immediately, messages will be sent to
 the transport to be handled later (see :ref:`messenger-worker`).
 
-Multiple Email Transports
--------------------------
+Adding Tags and Metadata to Emails
+----------------------------------
 
-You may want to use more than one mailer transport for delivery of your messages.
-This can be configured by replacing the ``dsn`` configuration entry with a
-``transports`` entry, like:
+.. versionadded:: 5.1
 
-.. code-block:: yaml
+    The :class:`Symfony\\Component\\Mailer\\Header\\TagHeader` and
+    :class:`Symfony\\Component\\Mailer\\Header\\MetadataHeader` classes were
+    introduced in Symfony 5.1.
 
-    # config/packages/mailer.yaml
-    framework:
-        mailer:
-            transports:
-                main: '%env(MAILER_DSN)%'
-                important: '%env(MAILER_DSN_IMPORTANT)%'
+Certain 3rd party transports support email *tags* and *metadata*, which can be used
+for grouping, tracking and workflows. You can add those by using the
+:class:`Symfony\\Component\\Mailer\\Header\\TagHeader` and
+:class:`Symfony\\Component\\Mailer\\Header\\MetadataHeader` classes. If your transport
+supports headers, it will convert them to their appropriate format::
 
-By default the first transport is used. The other transports can be used by
-adding a text header ``X-Transport`` to an email::
+    use Symfony\Component\Mailer\Header\MetadataHeader;
+    use Symfony\Component\Mailer\Header\TagHeader;
 
-    // Send using first "main" transport ...
-    $mailer->send($email);
+    $email->getHeaders()->add(new TagHeader('password-reset'));
+    $email->getHeaders()->add(new MetadataHeader('Color', 'blue'));
+    $email->getHeaders()->add(new MetadataHeader('Client-ID', '12345'));
 
-    // ... or use the "important" one
-    $email->getHeaders()->addTextHeader('X-Transport', 'important');
-    $mailer->send($email);
+If your transport does not support tags and metadata, they will be added as custom headers:
+
+.. code-block:: text
+
+    X-Tag: password-reset
+    X-Metadata-Color: blue
+    X-Metadata-Client-ID: 12345
+
+The following transports currently support tags and metadata:
+
+* Postmark
+* Mailgun
+* MailChimp
 
 Development & Debugging
 -----------------------
@@ -752,7 +789,7 @@ environment:
     If you're using Messenger and routing to a transport, the message will *still*
     be sent to that transport.
 
-Always Send to the Same Address
+Always Send to the same Address
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Instead of disabling delivery entirely, you might want to *always* send emails to
@@ -771,10 +808,10 @@ environment:
                 $sender: null
                 $recipients: ['youremail@example.com']
 
-.. _`download the foundation-emails.css file`: https://github.com/zurb/foundation-emails/blob/develop/dist/foundation-emails.css
+.. _`download the foundation-emails.css file`: https://github.com/foundation/foundation-emails/blob/develop/dist/foundation-emails.css
 .. _`league/html-to-markdown`: https://github.com/thephpleague/html-to-markdown
 .. _`Markdown syntax`: https://commonmark.org/
-.. _`Inky`: https://foundation.zurb.com/emails.html
+.. _`Inky`: https://get.foundation/emails/docs/inky.html
 .. _`S/MIME`: https://en.wikipedia.org/wiki/S/MIME
-.. _`OpenSSL PHP extension`: https://php.net/manual/en/book.openssl.php
+.. _`OpenSSL PHP extension`: https://www.php.net/manual/en/book.openssl.php
 .. _`PEM encoded`: https://en.wikipedia.org/wiki/Privacy-Enhanced_Mail

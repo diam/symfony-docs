@@ -63,13 +63,10 @@ services:
         services:
             app.mysql_lock:
                 class: App\Lock\MysqlLock
-                public: false
             app.postgresql_lock:
                 class: App\Lock\PostgresqlLock
-                public: false
             app.sqlite_lock:
                 class: App\Lock\SqliteLock
-                public: false
 
     .. code-block:: xml
 
@@ -80,24 +77,31 @@ services:
                 https://symfony.com/schema/dic/services/services-1.0.xsd">
 
             <services>
-                <service id="app.mysql_lock" public="false"
+                <service id="app.mysql_lock"
                     class="App\Lock\MysqlLock"/>
-                <service id="app.postgresql_lock" public="false"
+                <service id="app.postgresql_lock"
                     class="App\Lock\PostgresqlLock"/>
-                <service id="app.sqlite_lock" public="false"
+                <service id="app.sqlite_lock"
                     class="App\Lock\SqliteLock"/>
             </services>
         </container>
 
     .. code-block:: php
 
+        // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\Lock\MysqlLock;
         use App\Lock\PostgresqlLock;
         use App\Lock\SqliteLock;
 
-        $container->register('app.mysql_lock', MysqlLock::class)->setPublic(false);
-        $container->register('app.postgresql_lock', PostgresqlLock::class)->setPublic(false);
-        $container->register('app.sqlite_lock', SqliteLock::class)->setPublic(false);
+        return function(ContainerConfigurator $configurator) {
+            $services = $configurator->services();
+
+            $services->set('app.mysql_lock', MysqlLock::class);
+            $services->set('app.postgresql_lock', PostgresqlLock::class);
+            $services->set('app.sqlite_lock', SqliteLock::class);
+        };
 
 Instead of dealing with these three services, your application needs a generic
 ``app.lock`` service that will be an alias to one of these services, depending on
@@ -131,11 +135,11 @@ the generic ``app.lock`` service can be defined as follows:
                 https://symfony.com/schema/dic/services/services-1.0.xsd">
 
             <services>
-                <service id="app.mysql_lock" public="false"
+                <service id="app.mysql_lock"
                     class="App\Lock\MysqlLock"/>
-                <service id="app.postgresql_lock" public="false"
+                <service id="app.postgresql_lock"
                     class="App\Lock\PostgresqlLock"/>
-                <service id="app.sqlite_lock" public="false"
+                <service id="app.sqlite_lock"
                     class="App\Lock\SqliteLock"/>
 
                 <service id="app.lock">
@@ -146,16 +150,24 @@ the generic ``app.lock`` service can be defined as follows:
 
     .. code-block:: php
 
+        // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use App\Lock\MysqlLock;
         use App\Lock\PostgresqlLock;
         use App\Lock\SqliteLock;
 
-        $container->register('app.mysql_lock', MysqlLock::class)->setPublic(false);
-        $container->register('app.postgresql_lock', PostgresqlLock::class)->setPublic(false);
-        $container->register('app.sqlite_lock', SqliteLock::class)->setPublic(false);
+        return function(ContainerConfigurator $configurator) {
+            $services = $configurator->services();
 
-        $container->register('app.lock')
-            ->addTag('auto_alias', ['format' => 'app.%database_type%_lock']);
+            $services->set('app.mysql_lock', MysqlLock::class);
+            $services->set('app.postgresql_lock', PostgresqlLock::class);
+            $services->set('app.sqlite_lock', SqliteLock::class);
+
+            $services->set('app.lock')
+                ->tag('auto_alias', ['format' => 'app.%database_type%_lock'])
+            ;
+        };
 
 The ``format`` option defines the expression used to construct the name of the service
 to alias. This expression can use any container parameter (as usual,
@@ -168,10 +180,12 @@ wrapping their names with ``%`` characters).
     sense most of the times to prevent accessing those services directly instead
     of using the generic service alias.
 
-.. note::
+.. versionadded:: 5.1
 
-    You need to manually add the ``Symfony\Component\DependencyInjection\Compiler\AutoAliasServicePass``
-    compiler pass to the container for this feature to work.
+    In Symfony versions prior to 5.1, you needed to manually add the
+    ``Symfony\Component\DependencyInjection\Compiler\AutoAliasServicePass``
+    compiler pass to the container for this feature to work. This compiler pass
+    is now added automatically.
 
 console.command
 ---------------
@@ -827,11 +841,6 @@ translation.loader
 By default, translations are loaded from the filesystem in a variety of
 different formats (YAML, XLIFF, PHP, etc).
 
-.. seealso::
-
-    Learn how to :ref:`load custom formats <components-translation-custom-loader>`
-    in the components section.
-
 Now, register your loader as a service and tag it with ``translation.loader``:
 
 .. configuration-block::
@@ -1015,11 +1024,6 @@ This is the name that's used to determine which dumper should be used.
 
         $container->register(JsonFileDumper::class)
             ->addTag('translation.dumper', ['alias' => 'json']);
-
-.. seealso::
-
-    Learn how to :ref:`dump to custom formats <components-translation-custom-dumper>`
-    in the components section.
 
 .. _reference-dic-tags-twig-extension:
 
@@ -1208,5 +1212,5 @@ For an example, see the ``DoctrineInitializer`` class inside the Doctrine
 Bridge.
 
 .. _`Twig's documentation`: https://twig.symfony.com/doc/2.x/advanced.html#creating-an-extension
-.. _`SwiftMailer's Plugin Documentation`: http://swiftmailer.org/docs/plugins.html
+.. _`SwiftMailer's Plugin Documentation`: https://swiftmailer.symfony.com/docs/plugins.html
 .. _`Twig Loader`: https://twig.symfony.com/doc/2.x/api.html#loaders

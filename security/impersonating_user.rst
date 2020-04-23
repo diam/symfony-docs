@@ -38,7 +38,9 @@ listener:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -85,15 +87,20 @@ role to the users that need it.
 Knowing When Impersonation Is Active
 ------------------------------------
 
-When a user is being impersonated, Symfony grants them a special role called
-``ROLE_PREVIOUS_ADMIN`` (in addition to the roles the user may have). Use this
-special role, for instance, to show a link to exit impersonation in a template:
+You can use the special attribute ``IS_IMPERSONATOR`` to check if the
+impersonation is active in this session. Use this special role, for
+instance, to show a link to exit impersonation in a template:
 
 .. code-block:: html+twig
 
-    {% if is_granted('ROLE_PREVIOUS_ADMIN') %}
+    {% if is_granted('IS_IMPERSONATOR') %}
         <a href="{{ path('homepage', {'_switch_user': '_exit'}) }}">Exit impersonation</a>
     {% endif %}
+
+.. versionadded:: 5.1
+
+    The ``IS_IMPERSONATOR`` was introduced in Symfony 5.1. Use
+    ``ROLE_PREVIOUS_ADMIN`` prior to Symfony 5.1.
 
 Finding the Original User
 -------------------------
@@ -160,7 +167,9 @@ also adjust the query parameter name via the ``parameter`` setting:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
             <config>
                 <!-- ... -->
 
@@ -193,8 +202,8 @@ Limiting User Switching
 
 If you need more control over user switching, you can use a security voter. First,
 configure ``switch_user`` to check for some new, custom attribute. This can be
-anything, but *cannot* start with ``ROLE_`` (to enforce that only your voter will)
-be called:
+anything, but *cannot* start with ``ROLE_`` (to enforce that only your voter will
+be called):
 
 .. configuration-block::
 
@@ -217,7 +226,9 @@ be called:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
             <config>
                 <!-- ... -->
 

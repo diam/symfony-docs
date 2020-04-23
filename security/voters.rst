@@ -26,7 +26,7 @@ uses the authorization checker), or by
 
 Ultimately, Symfony takes the responses from all voters and makes the final
 decision (to allow or deny access to the resource) according to the strategy defined
-in the application, which can be: affirmative, consensus or unanimous.
+in the application, which can be: affirmative, consensus, unanimous or priority.
 
 For more information take a look at
 :ref:`the section about access decision managers <components-security-access-decision-manager>`.
@@ -125,7 +125,7 @@ would look like this::
                 return false;
             }
 
-            // only vote on Post objects inside this voter
+            // only vote on `Post` objects
             if (!$subject instanceof Post) {
                 return false;
             }
@@ -142,7 +142,7 @@ would look like this::
                 return false;
             }
 
-            // you know $subject is a Post object, thanks to supports
+            // you know $subject is a Post object, thanks to `supports()`
             /** @var Post $post */
             $post = $subject;
 
@@ -163,15 +163,13 @@ would look like this::
                 return true;
             }
 
-            // the Post object could have, for example, a method isPrivate()
-            // that checks a boolean $private property
+            // the Post object could have, for example, a method `isPrivate()`
             return !$post->isPrivate();
         }
 
         private function canEdit(Post $post, User $user)
         {
-            // this assumes that the data object has a getOwner() method
-            // to get the entity of the user who owns this data object
+            // this assumes that the Post object has a `getOwner()` method
             return $user === $post->getOwner();
         }
     }
@@ -261,9 +259,8 @@ voters vote for one action and object. For instance, suppose you have one voter 
 checks if the user is a member of the site and a second one that checks if the user
 is older than 18.
 
-To handle these cases, the access decision manager uses an access decision
-strategy. You can configure this to suit your needs. There are three
-strategies available:
+To handle these cases, the access decision manager uses a "strategy" which you can configure.
+There are three strategies available:
 
 ``affirmative`` (default)
     This grants access as soon as there is *one* voter granting access;
@@ -274,7 +271,15 @@ strategies available:
 ``unanimous``
     This only grants access if there is no voter denying access. If all voters
     abstained from voting, the decision is based on the ``allow_if_all_abstain``
-    config option (which defaults to ``false``).
+    config option (which defaults to ``false``);
+
+``priority``
+    This grants or denies access by the first voter that does not abstain,
+    based on their service priority;
+
+    .. versionadded:: 5.1
+
+        The ``priority`` version strategy was introduced in Symfony 5.1.
 
 In the above scenario, both voters should grant access in order to grant access
 to the user to read the post. In this case, the default strategy is no longer
@@ -299,7 +304,9 @@ security configuration:
             xmlns:srv="http://symfony.com/schema/dic/services"
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd"
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd"
         >
 
             <config>

@@ -200,8 +200,8 @@ attributes).
     is the :class:`Symfony\\Component\\HttpKernel\\EventListener\\RouterListener`.
     This class executes the routing layer, which returns an *array* of information
     about the matched request, including the ``_controller`` and any placeholders
-    that are in the route's pattern (e.g. ``{slug}``). See
-    :doc:`Routing component </components/routing>`.
+    that are in the route's pattern (e.g. ``{slug}``). See the
+    :doc:`Routing documentation </routing>`.
 
     This array of information is stored in the :class:`Symfony\\Component\\HttpFoundation\\Request`
     object's ``attributes`` array. Adding the routing information here doesn't
@@ -752,11 +752,11 @@ Learn more
 
    /reference/events
 
-.. _reflection: https://php.net/manual/en/book.reflection.php
+.. _reflection: https://www.php.net/manual/en/book.reflection.php
 .. _FOSRestBundle: https://github.com/friendsofsymfony/FOSRestBundle
-.. _`PHP FPM`: https://php.net/manual/en/install.fpm.php
+.. _`PHP FPM`: https://www.php.net/manual/en/install.fpm.php
 .. _`SensioFrameworkExtraBundle`: https://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/index.html
 .. _`@ParamConverter`: https://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/annotations/converters.html
 .. _`@Template`: https://symfony.com/doc/current/bundles/SensioFrameworkExtraBundle/annotations/view.html
 .. _`EmailSenderListener`: https://github.com/symfony/swiftmailer-bundle/blob/master/EventListener/EmailSenderListener.php
-.. _variadic: http://php.net/manual/en/functions.arguments.php
+.. _variadic: https://www.php.net/manual/en/functions.arguments.php#functions.variable-arg-list

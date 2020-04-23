@@ -20,16 +20,24 @@ Before creating your first Symfony application you must:
 * Install PHP 7.2.5 or higher and these PHP extensions (which are installed and
   enabled by default in most PHP 7 installations): `Ctype`_, `iconv`_, `JSON`_,
   `PCRE`_, `Session`_, `SimpleXML`_, and `Tokenizer`_;
-* `Install Composer`_, which is used to install PHP packages;
-* `Install Symfony`_, which creates in your computer a binary called ``symfony``
-  that provides all the tools you need to develop your application locally.
+* `Install Composer`_, which is used to install PHP packages.
 
-The ``symfony`` binary provides a tool to check if your computer meets these
+Optionally, you can also `install Symfony CLI`_. This creates a binary called
+``symfony`` that provides all the tools you need to develop and run your
+Symfony application locally.
+
+The ``symfony`` binary also provides a tool to check if your computer meets all
 requirements. Open your console terminal and run this command:
 
 .. code-block:: terminal
 
     $ symfony check:requirements
+
+.. note::
+
+    The Symfony binary is developped internally at Symfony. If you want to
+    report a bug or suggest a new feature, please create an issue on
+    `symfony/cli`_.
 
 .. _creating-symfony-applications:
 
@@ -51,8 +59,8 @@ The only difference between these two commands is the number of packages
 installed by default. The ``--full`` option installs all the packages that you
 usually need to build web applications, so the installation size will be bigger.
 
-If you can't or don't want to `install Symfony`_ for any reason, run these
-commands to create the new Symfony application using Composer:
+If you're not using the Symfony binary, run these commands to create the new
+Symfony application using Composer:
 
 .. code-block:: terminal
 
@@ -76,14 +84,16 @@ started. In other words, your new application is ready!
 Running Symfony Applications
 ----------------------------
 
-On production, you should use a web server like Nginx or Apache (see
-:doc:`configuring a web server to run Symfony </setup/web_server_configuration>`).
-But for development, it's more convenient to use the
-:doc:`local web server </setup/symfony_server>` provided by Symfony.
+In production, you should install a webserver like Nginx or Apache and
+:doc:`configure it to run Symfony </setup/web_server_configuration>`. This
+method can also be used if you're not using the Symfony local web server for
+development.
 
-This local server provides support for HTTP/2, TLS/SSL, automatic generation of
-security certificates and many other features. It works with any PHP application,
-not only Symfony projects, so it's a very useful development tool.
+However for local development, the most convenient way of running Symfony is by
+using the :doc:`local web server </setup/symfony_server>` provided by the
+``symfony`` binary. This local server provides among other things support for
+HTTP/2, concurrent requests, TLS/SSL and automatic generation of security
+certificates.
 
 Open your console terminal, move into your new project directory and start the
 local web server as follows:
@@ -96,6 +106,11 @@ local web server as follows:
 Open your browser and navigate to ``http://localhost:8000/``. If everything is
 working, you'll see a welcome page. Later, when you are finished working, stop
 the server by pressing ``Ctrl+C`` from your terminal.
+
+.. tip::
+
+    The web server works with any PHP application, not only Symfony projects,
+    so it's a very useful generic development tool.
 
 .. _install-existing-app:
 
@@ -160,6 +175,8 @@ you'll see a Composer error explaining that ``logger`` is not a valid package
 name. However, if the application has Symfony Flex installed, that command
 installs and enables all the packages needed to use the official Symfony logger.
 
+.. _recipes-description:
+
 This is possible because lots of Symfony packages/bundles define **"recipes"**,
 which are a set of automated instructions to install and enable packages into
 Symfony applications. Flex keeps tracks of the recipes it installed in a
@@ -205,7 +222,7 @@ command to unpack the already installed packs: ``composer unpack PACK_NAME``
 Checking Security Vulnerabilities
 ---------------------------------
 
-The ``symfony`` binary created when you `install Symfony`_ provides a command to
+The ``symfony`` binary created when you `install Symfony CLI`_ provides a command to
 check whether your project's dependencies contain any known security
 vulnerability:
 
@@ -289,8 +306,8 @@ Learn More
 
 .. _`Stellar Development with Symfony`: https://symfonycasts.com/screencast/symfony
 .. _`Install Composer`: https://getcomposer.org/download/
-.. _`Install Symfony`: https://symfony.com/download
-.. _`install Symfony`: https://symfony.com/download
+.. _`install Symfony CLI`: https://symfony.com/download
+.. _`symfony/cli`: https://github.com/symfony/cli
 .. _`The Symfony Demo Application`: https://github.com/symfony/demo
 .. _`Symfony Flex`: https://github.com/symfony/flex
 .. _`PHP security advisories database`: https://github.com/FriendsOfPHP/security-advisories
@@ -298,10 +315,10 @@ Learn More
 .. _`Main recipe repository`: https://github.com/symfony/recipes
 .. _`Contrib recipe repository`: https://github.com/symfony/recipes-contrib
 .. _`Symfony Recipes documentation`: https://github.com/symfony/recipes/blob/master/README.rst
-.. _`iconv`: https://php.net/book.iconv
-.. _`JSON`: https://php.net/book.json
-.. _`Session`: https://php.net/book.session
-.. _`Ctype`: https://php.net/book.ctype
-.. _`Tokenizer`: https://php.net/book.tokenizer
-.. _`SimpleXML`: https://php.net/book.simplexml
-.. _`PCRE`: https://php.net/book.pcre
+.. _`iconv`: https://www.php.net/book.iconv
+.. _`JSON`: https://www.php.net/book.json
+.. _`Session`: https://www.php.net/book.session
+.. _`Ctype`: https://www.php.net/book.ctype
+.. _`Tokenizer`: https://www.php.net/book.tokenizer
+.. _`SimpleXML`: https://www.php.net/book.simplexml
+.. _`PCRE`: https://www.php.net/book.pcre

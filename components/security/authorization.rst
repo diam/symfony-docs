@@ -19,7 +19,7 @@ by an instance of :class:`Symfony\\Component\\Security\\Core\\Authorization\\Acc
 An authorization decision will always be based on a few things:
 
 * The current token
-    For instance, the token's :method:`Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface::getRoleNames`
+    For instance, the token's :method:`Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface::getRoles`
     method may be used to retrieve the roles of the current user (e.g.
     ``ROLE_SUPER_ADMIN``), or a decision may be based on the class of the token.
 * A set of attributes
@@ -49,6 +49,13 @@ recognizes several strategies:
 ``unanimous``
     only grant access if none of the voters has denied access;
 
+``priority``
+    grants or denies access by the first voter that does not abstain;
+
+    .. versionadded:: 5.1
+
+        The ``priority`` version strategy was introduced in Symfony 5.1.
+
 Usage of the available options in detail::
 
     use Symfony\Component\Security\Core\Authorization\AccessDecisionManager;
@@ -56,7 +63,7 @@ Usage of the available options in detail::
     // instances of Symfony\Component\Security\Core\Authorization\Voter\VoterInterface
     $voters = [...];
 
-    // one of "affirmative", "consensus", "unanimous"
+    // one of "affirmative", "consensus", "unanimous", "priority"
     $strategy = ...;
 
     // whether or not to grant access when all voters abstain
@@ -98,10 +105,22 @@ AuthenticatedVoter
 ~~~~~~~~~~~~~~~~~~
 
 The :class:`Symfony\\Component\\Security\\Core\\Authorization\\Voter\\AuthenticatedVoter`
-voter supports the attributes ``IS_AUTHENTICATED_FULLY``, ``IS_AUTHENTICATED_REMEMBERED``,
-and ``IS_AUTHENTICATED_ANONYMOUSLY`` and grants access based on the current
-level of authentication, i.e. is the user fully authenticated, or only based
-on a "remember-me" cookie, or even authenticated anonymously?::
+voter supports the attributes ``IS_AUTHENTICATED_FULLY``,
+``IS_AUTHENTICATED_REMEMBERED``, ``IS_AUTHENTICATED_ANONYMOUSLY``,
+to grant access based on the current level of authentication, i.e. is the
+user fully authenticated, or only based on a "remember-me" cookie, or even
+authenticated anonymously?
+
+It also supports the attributes ``IS_ANONYMOUS``, ``IS_REMEMBERED``,
+``IS_IMPERSONATED`` to grant access based on a specific state of
+authentication.
+
+.. versionadded:: 5.1
+
+    The ``IS_ANONYMOUS``, ``IS_REMEMBERED`` and ``IS_IMPERSONATED``
+    attributes were introduced in Symfony 5.1.
+
+::
 
     use Symfony\Component\Security\Core\Authentication\AuthenticationTrustResolver;
 
@@ -122,8 +141,8 @@ RoleVoter
 
 The :class:`Symfony\\Component\\Security\\Core\\Authorization\\Voter\\RoleVoter`
 supports attributes starting with ``ROLE_`` and grants access to the user
-when the required ``ROLE_*`` attributes can all be found in the array of
-roles returned by the token's :method:`Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface::getRoleNames`
+when at least one required ``ROLE_*`` attribute can be found in the array of
+roles returned by the token's :method:`Symfony\\Component\\Security\\Core\\Authentication\\Token\\TokenInterface::getRoles`
 method::
 
     use Symfony\Component\Security\Core\Authorization\Voter\RoleVoter;
@@ -221,15 +240,17 @@ which contains request matchers and a corresponding set of attributes that
 are required for the current user to get access to the application::
 
     use Symfony\Component\HttpFoundation\RequestMatcher;
+    use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
     use Symfony\Component\Security\Http\AccessMap;
     use Symfony\Component\Security\Http\Firewall\AccessListener;
 
     $accessMap = new AccessMap();
+    $tokenStorage = new TokenStorage();
     $requestMatcher = new RequestMatcher('^/admin');
     $accessMap->add($requestMatcher, ['ROLE_ADMIN']);
 
     $accessListener = new AccessListener(
-        $securityContext,
+        $tokenStorage,
         $accessDecisionManager,
         $accessMap,
         $authenticationManager
@@ -256,4 +277,3 @@ decision manager::
     if (!$authorizationChecker->isGranted('ROLE_ADMIN')) {
         throw new AccessDeniedException();
     }
-

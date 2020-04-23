@@ -127,7 +127,7 @@ on the ``validator`` service (which implements :class:`Symfony\\Component\\Valid
 The job of the ``validator`` is to read the constraints (i.e. rules)
 of a class and verify if the data on the object satisfies those
 constraints. If validation fails, a non-empty list of errors
-(class :class:`Symfony\\Component\\Validator\\ConstraintViolationList`) is
+(:class:`Symfony\\Component\\Validator\\ConstraintViolationList` class) is
 returned. Take this simple example from inside a controller::
 
     // ...
@@ -739,4 +739,4 @@ Learn more
     /validation/*
 
 .. _Validator: https://github.com/symfony/validator
-.. _JSR303 Bean Validation specification: http://jcp.org/en/jsr/detail?id=303
+.. _JSR303 Bean Validation specification: https://jcp.org/en/jsr/detail?id=303

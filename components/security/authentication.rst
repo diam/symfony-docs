@@ -17,9 +17,8 @@ The listener should then store the authenticated token using
     use Symfony\Component\Security\Core\Authentication\AuthenticationManagerInterface;
     use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
     use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
-    use Symfony\Component\Security\Http\Firewall\ListenerInterface;
 
-    class SomeAuthenticationListener implements ListenerInterface
+    class SomeAuthenticationListener
     {
         /**
          * @var TokenStorageInterface
@@ -38,7 +37,7 @@ The listener should then store the authenticated token using
 
         // ...
 
-        public function handle(RequestEvent $event)
+        public function __invoke(RequestEvent $event)
         {
             $request = $event->getRequest();
 
@@ -100,10 +99,10 @@ Authentication Providers
 
 Each provider (since it implements
 :class:`Symfony\\Component\\Security\\Core\\Authentication\\Provider\\AuthenticationProviderInterface`)
-has a method :method:`Symfony\\Component\\Security\\Core\\Authentication\\Provider\\AuthenticationProviderInterface::supports`
+has a :method:`Symfony\\Component\\Security\\Core\\Authentication\\Provider\\AuthenticationProviderInterface::supports` method
 by which the ``AuthenticationProviderManager``
 can determine if it supports the given token. If this is the case, the
-manager then calls the provider's method :method:`Symfony\\Component\\Security\\Core\\Authentication\\Provider\\AuthenticationProviderInterface::authenticate`.
+manager then calls the provider's :method:`Symfony\\Component\\Security\\Core\\Authentication\\Provider\\AuthenticationProviderInterface::authenticate` method.
 This method should return an authenticated token or throw an
 :class:`Symfony\\Component\\Security\\Core\\Exception\\AuthenticationException`
 (or any other exception extending it).
@@ -274,7 +273,7 @@ in) is correct, you can use::
 Authentication Events
 ---------------------
 
-The security component provides 4 related authentication events:
+The security component provides the following authentication events:
 
 ===============================  ================================================================= ==============================================================================
 Name                             Event Constant                                                    Argument Passed to the Listener

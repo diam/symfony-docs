@@ -52,7 +52,7 @@ random) number and prints it. To do that, create a "Controller" class and a
 
     class LuckyController
     {
-        public function number()
+        public function number(): Response
         {
             $number = random_int(0, 100);
 
@@ -75,9 +75,7 @@ is defined by creating a **route** in the ``config/routes.yaml`` file:
         path: /lucky/number
         controller: App\Controller\LuckyController::number
 
-That's it! If you are using Symfony web server, try it out by going to:
-
-    http://localhost:8000/lucky/number
+That's it! If you are using Symfony web server, try it out by going to: http://localhost:8000/lucky/number
 
 If you see a lucky number being printed back to you, congratulations! But before
 you run off to play the lottery, check out how this works. Remember the two steps
@@ -123,7 +121,7 @@ You can now add your route directly *above* the controller:
         }
     }
 
-That's it! The page - ``http://localhost:8000/lucky/number`` will work exactly
+That's it! The page - http://localhost:8000/lucky/number will work exactly
 like before! Annotations are the recommended way to configure routes.
 
 .. _flex-quick-intro:

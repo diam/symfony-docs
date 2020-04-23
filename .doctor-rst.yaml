@@ -68,6 +68,7 @@ whitelist:
         - '# username is your full Gmail or Google Apps email address'
         - '.. _`LDAP injection`: http://projects.webappsec.org/w/page/13246947/LDAP%20Injection'
         - '.. versionadded:: 0.21.0' # Encore
+        - '.. versionadded:: 0.28.4' # Encore
         - '.. versionadded:: 2.4.0' # SwiftMailer
         - '.. versionadded:: 1.30' # Twig
         - '.. versionadded:: 1.35' # Twig
@@ -75,6 +76,7 @@ whitelist:
         - '.. versionadded:: 1.11' # MakerBundle
         - '.. versionadded:: 1.3' # MakerBundle
         - '.. versionadded:: 1.8' # MakerBundle
+        - '.. versionadded:: 1.6' # Flex in setup/upgrade_minor.rst
         - '0 => 123' # assertion for var_dumper - components/var_dumper.rst
         - '1 => "foo"' # assertion for var_dumper - components/var_dumper.rst
         - '123,' # assertion for var_dumper - components/var_dumper.rst
@@ -84,3 +86,4 @@ whitelist:
         - ".. _`Deploying Symfony 4 Apps on Heroku`: https://devcenter.heroku.com/articles/deploying-symfony4"
         - "//                  224, 165, 141, 224, 164, 164, 224, 165, 135])"
         - '.. versionadded:: 0.2' # MercureBundle
+        - 'provides a ``loginUser()`` method to simulate logging in in your functional'

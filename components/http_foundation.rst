@@ -443,9 +443,21 @@ method takes an instance of
 You can clear a cookie via the
 :method:`Symfony\\Component\\HttpFoundation\\ResponseHeaderBag::clearCookie` method.
 
-Note you can create a
-:class:`Symfony\\Component\\HttpFoundation\\Cookie` object from a raw header
-value using :method:`Symfony\\Component\\HttpFoundation\\Cookie::fromString`.
+In addition to the ``Cookie::create()`` method, you can create a ``Cookie``
+object from a raw header value using :method:`Symfony\\Component\\HttpFoundation\\Cookie::fromString`
+method. You can also use the ``with*()`` methods to change some Cookie property (or
+to build the entire Cookie using a fluent interface). Each ``with*()`` method returns
+a new object with the modified property::
+
+    $cookie = Cookie::create('foo')
+        ->withValue('bar')
+        ->withExpiresTime(strtotime('Fri, 20-May-2011 15:25:52 GMT'))
+        ->withDomain('.example.com')
+        ->withSecure(true);
+
+.. versionadded:: 5.1
+
+    The ``with*()`` methods were introduced in Symfony 5.1.
 
 Managing the HTTP Cache
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -453,17 +465,17 @@ Managing the HTTP Cache
 The :class:`Symfony\\Component\\HttpFoundation\\Response` class has a rich set
 of methods to manipulate the HTTP headers related to the cache:
 
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setPublic`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setPrivate`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::expire`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setExpires`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setMaxAge`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setSharedMaxAge`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setTtl`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setClientTtl`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setLastModified`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setEtag`;
-* :method:`Symfony\\Component\\HttpFoundation\\Response::setVary`;
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setPublic`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setPrivate`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::expire`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setExpires`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setMaxAge`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setSharedMaxAge`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setTtl`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setClientTtl`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setLastModified`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setEtag`
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setVary`
 
 .. note::
 
@@ -477,14 +489,24 @@ can be used to set the most commonly used cache information in one method
 call::
 
     $response->setCache([
-        'etag'          => 'abcdef',
-        'last_modified' => new \DateTime(),
-        'max_age'       => 600,
-        's_maxage'      => 600,
-        'private'       => false,
-        'public'        => true,
-        'immutable'     => true,
+        'must_revalidate'  => false,
+        'no_cache'         => false,
+        'no_store'         => false,
+        'no_transform'     => false,
+        'public'           => true,
+        'private'          => false,
+        'proxy_revalidate' => false,
+        'max_age'          => 600,
+        's_maxage'         => 600,
+        'immutable'        => true,
+        'last_modified'    => new \DateTime(),
+        'etag'             => 'abcdef'
     ]);
+
+.. versionadded:: 5.1
+
+    The ``must_revalidate``, ``no_cache``, ``no_store``, ``no_transform`` and
+    ``proxy_revalidate`` directives were introduced in Symfony 5.1.
 
 To check if the Response validators (``ETag``, ``Last-Modified``) match a
 conditional value specified in the client Request, use the
@@ -706,6 +728,37 @@ Session
 
 The session information is in its own document: :doc:`/components/http_foundation/sessions`.
 
+Safe Content Preference
+-----------------------
+
+Some web sites have a "safe" mode to assist those who don't want to be exposed
+to content to which they might object. The  `RFC 8674`_ specification defines a
+way for user agents to ask for safe content to a server.
+
+The specification does not define what content might be considered objectionable,
+so the concept of "safe" is not precisely defined. Rather, the term is interpreted
+by the server and within the scope of each web site that chooses to act upon this information.
+
+Symfony offers two methods to interact with this preference:
+
+* :method:`Symfony\\Component\\HttpFoundation\\Request::preferSafeContent`;
+* :method:`Symfony\\Component\\HttpFoundation\\Response::setContentSafe`;
+
+.. versionadded:: 5.1
+
+    The ``preferSafeContent()`` and ``setContentSafe()`` methods were introduced
+    in Symfony 5.1.
+
+The following example shows how to detect if the user agent prefers "safe" content::
+
+    if ($request->preferSafeContent()) {
+        $response = new Response($alternativeContent);
+        // this informs the user we respected their preferences
+        $response->setContentSafe();
+
+        return $response;
+    }
+
 Learn More
 ----------
 
@@ -721,5 +774,6 @@ Learn More
 
 .. _nginx: https://www.nginx.com/resources/wiki/start/topics/examples/xsendfile/
 .. _Apache: https://tn123.org/mod_xsendfile/
-.. _`JSON Hijacking`: http://haacked.com/archive/2009/06/25/json-hijacking.aspx
-.. _OWASP guidelines: https://www.owasp.org/index.php/OWASP_AJAX_Security_Guidelines#Always_return_JSON_with_an_Object_on_the_outside
+.. _`JSON Hijacking`: https://haacked.com/archive/2009/06/25/json-hijacking.aspx/
+.. _OWASP guidelines: https://cheatsheetseries.owasp.org/cheatsheets/AJAX_Security_Cheat_Sheet.html#always-return-json-with-an-object-on-the-outside
+.. _RFC 8674: https://tools.ietf.org/html/rfc8674

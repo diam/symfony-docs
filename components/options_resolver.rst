@@ -285,7 +285,7 @@ been set::
         }
     }
 
-The method :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::getMissingOptions`
+The :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::getMissingOptions` method
 lets you access the names of all missing options.
 
 Type Validation
@@ -777,6 +777,39 @@ the option::
 
 This closure receives as argument the value of the option after validating it
 and before normalizing it when the option is being resolved.
+
+Chaining Option Configurations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In many cases you may need to define multiple configurations for each option.
+For example, suppose the ``InvoiceMailer`` class has an ``host`` option that is required
+and a ``transport`` option which can be one of ``sendmail``, ``mail`` and ``smtp``.
+You can improve the readability of the code avoiding to duplicate option name for
+each configuration using the :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::define`
+method::
+
+    // ...
+    class InvoiceMailer
+    {
+        // ...
+        public function configureOptions(OptionsResolver $resolver)
+        {
+            // ...
+            $resolver->define('host')
+                ->required()
+                ->default('smtp.example.org')
+                ->allowedTypes('string');
+            $resolver->define('transport')
+                ->required()
+                ->default('transport')
+                ->allowedValues(['sendmail', 'mail', 'smtp']);
+        }
+    }
+
+.. versionadded:: 5.1
+
+    The :method:`Symfony\\Component\\OptionsResolver\\OptionsResolver::define` method
+    was introduced in Symfony 5.1.
 
 Performance Tweaks
 ~~~~~~~~~~~~~~~~~~

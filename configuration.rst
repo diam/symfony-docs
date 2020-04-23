@@ -25,7 +25,7 @@ the ``services.yaml`` file configures the services of the
 :doc:`service container </service_container>`; the ``bundles.php`` file enables/
 disables packages in your application.
 
-You'll be working most in the ``config/packages/`` directory. This directory
+You'll be working mostly in the ``config/packages/`` directory. This directory
 stores the configuration of every package installed in your application.
 Packages (also called "bundles" in Symfony and "plugins/modules" in other
 projects) add ready-to-use features to your projects.
@@ -55,7 +55,7 @@ to change these files after package installation
 Configuration Formats
 ~~~~~~~~~~~~~~~~~~~~~
 
-Unlike other frameworks, Symfony doesn't impose you a specific format to
+Unlike other frameworks, Symfony doesn't impose a specific format on you to
 configure your applications. Symfony lets you choose between YAML, XML and PHP
 and throughout the Symfony documentation, all configuration examples will be
 shown in these three formats.
@@ -70,8 +70,8 @@ readable. These are the main advantages and disadvantages of each format:
 * **YAML**: simple, clean and readable, but not all IDEs support autocompletion
   and validation for it. :doc:`Learn the YAML syntax </components/yaml/yaml_format>`;
 * **XML**:autocompleted/validated by most IDEs and is parsed natively by PHP,
-  but sometimes it generates too verbose configuration. `Learn the XML syntax`_;
-* **PHP**: very powerful and it allows to create dynamic configuration, but the
+  but sometimes it generates configuration considered too verbose. `Learn the XML syntax`_;
+* **PHP**: very powerful and it allows you to create dynamic configuration, but the
   resulting configuration is less readable than the other formats.
 
 Importing Configuration Files
@@ -351,8 +351,8 @@ development), ``prod`` (for production servers) and ``test`` (for
 the configuration files in this order (the last files can override the values
 set in the previous ones):
 
-#. ``config/packages/*.yaml`` (and ``.xml`` and ``*.php`` files too);
-#. ``config/packages/<environment-name>/*.yaml`` (and ``.xml`` and ``*.php`` files too);
+#. ``config/packages/*.yaml`` (and ``*.xml`` and ``*.php`` files too);
+#. ``config/packages/<environment-name>/*.yaml`` (and ``*.xml`` and ``*.php`` files too);
 #. ``config/packages/services.yaml`` (and ``services.xml`` and ``services.php`` files too);
 
 Take the ``framework`` package, installed by default, as an example:
@@ -368,7 +368,7 @@ Take the ``framework`` package, installed by default, as an example:
   ``config/packages/framework.yaml``.
 
 In reality, each environment differs only somewhat from others. This means that
-all environments share a large base of common configurations, which is put in
+all environments share a large base of common configuration, which is put in
 files directly in the ``config/packages/`` directory.
 
 .. seealso::
@@ -417,15 +417,15 @@ going to production:
 #. Create a configuration directory with the same name as the environment (in
    this case, ``config/packages/staging/``);
 #. Add the needed configuration files in ``config/packages/staging/`` to
-   define the behavior of the new environment. Symfony loads first the files in
-   ``config/packages/*.yaml``, so you must only configure the differences with
-   those files;
+   define the behavior of the new environment. Symfony loads the
+   ``config/packages/*.yaml`` files first, so you only need to configure the
+   differences to those files;
 #. Select the ``staging`` environment using the ``APP_ENV`` env var as explained
    in the previous section.
 
 .. tip::
 
-    It's common for environments to be similar between each other, so you can
+    It's common for environments to be similar to each other, so you can
     use `symbolic links`_ between ``config/packages/<environment-name>/``
     directories to reuse the same configuration.
 
@@ -436,14 +436,14 @@ Configuration Based on Environment Variables
 
 Using `environment variables`_ (or "env vars" for short) is a common practice to
 configure options that depend on where the application is run (e.g. the database
-credentials are usually different in production and in your local machine).
+credentials are usually different in production versus your local machine). If
+the values are sensitive, you can even :doc:`encrypt them as secrets </configuration/secrets>`.
 
-Instead of defining those as regular options, you can define them as environment
-variables and reference them in the configuration files using the special syntax
+You can reference environment variables using the special syntax
 ``%env(ENV_VAR_NAME)%``. The values of these options are resolved at runtime
 (only once per request, to not impact performance).
 
-This example shows how to configure the database connection using an env var:
+This example shows how you could configure the database connection using an env var:
 
 .. configuration-block::
 
@@ -485,29 +485,146 @@ This example shows how to configure the database connection using an env var:
             ]
         ]);
 
-The next step is to define the value of those env vars in your shell, your web
-server, etc. This is explained in the following sections, but to protect your
-application from undefined env vars, you can give them a default value using the
-``.env`` file:
-
-.. code-block:: bash
-
-    # .env
-    DATABASE_URL=sqlite:///%kernel.project_dir%/var/data.db
-
 .. seealso::
 
     The values of env vars can only be strings, but Symfony includes some
     :doc:`env var processors </configuration/env_var_processors>` to transform
     their contents (e.g. to turn a string value into an integer).
 
-In order to define the actual values of env vars, Symfony proposes different
-solutions depending if the application is running in production or in your local
-development machine.
+To define the value of an env var, you have several options:
 
-Independent from the way you set environment variables, you may need to run the
-``debug:container`` command with the ``--env-vars`` option to verify that they
-are defined and have the expected values:
+* :ref:`Add the value to a .env file <config-dot-env>`;
+* :ref:`Encrypt the value as a secret <configuration-secrets>`;
+* Set the value as a real environment variable in your shell or your web server.
+
+.. tip::
+
+    Some hosts - like SymfonyCloud - offer easy `utilities to manage env vars`_
+    in production.
+
+.. caution::
+
+    Beware that dumping the contents of the ``$_SERVER`` and ``$_ENV`` variables
+    or outputting the ``phpinfo()`` contents will display the values of the
+    environment variables, exposing sensitive information such as the database
+    credentials.
+
+    The values of the env vars are also exposed in the web interface of the
+    :doc:`Symfony profiler </profiler>`. In practice this shouldn't be a
+    problem because the web profiler must **never** be enabled in production.
+
+.. _configuration-env-var-in-dev:
+.. _config-dot-env:
+
+Configuring Environment Variables in .env Files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of defining env vars in your shell or your web server, Symfony provides
+a convenient way to define them inside a ``.env`` (with a leading dot) file
+located at the root of your project.
+
+The ``.env`` file is read and parsed on every request and its env vars are added
+to the ``$_ENV`` & ``$_SERVER`` PHP variables. Any existing env vars are *never*
+overwritten by the values defined in ``.env``, so you can combine both.
+
+For example, to define the ``DATABASE_URL`` env var shown earlier in this article,
+you can add:
+
+.. code-block:: bash
+
+    # .env
+    DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/db_name"
+
+This file should be committed to your repository and (due to that fact) should
+only contain "default" values that are good for local development. This file
+should not contain production values.
+
+In addition to your own env vars, this ``.env`` file also contains the env vars
+defined by the third-party packages installed in your application (they are
+added automatically by :ref:`Symfony Flex <symfony-flex>` when installing packages).
+
+.. _configuration-multiple-env-files:
+
+Overriding Environment Values via .env.local
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you need to override an environment value (e.g. to a different value on your
+local machine), you can do that in a ``.env.local`` file:
+
+.. code-block:: bash
+
+    # .env.local
+    DATABASE_URL="mysql://root:@127.0.0.1:3306/my_database_name"
+
+This file should be ignored by git and should *not* be committed to your repository.
+Several other ``.env`` files are available to set environment variables in *just*
+the right situation:
+
+* ``.env``: defines the default values of the env vars needed by the application;
+* ``.env.local``: overrides the default values for all environments but only on
+  the machine which contains the file. This file should not be committed to the
+  repository and it's ignored in the ``test`` environment (because tests should
+  produce the same results for everyone);
+* ``.env.<environment>`` (e.g. ``.env.test``): overrides env vars only for one
+  environment but for all machines (these files *are* committed);
+* ``.env.<environment>.local`` (e.g. ``.env.test.local``): defines machine-specific
+  env var overrides only for one environment. It's similar to ``.env.local``,
+  but the overrides only apply to one environment.
+
+*Real* environment variables always win over env vars created by any of the
+``.env`` files.
+
+The ``.env`` and ``.env.<environment>`` files should be committed to the
+repository because they are the same for all developers and machines. However,
+the env files ending in ``.local`` (``.env.local`` and ``.env.<environment>.local``)
+**should not be committed** because only you will use them. In fact, the
+``.gitignore`` file that comes with Symfony prevents them from being committed.
+
+.. caution::
+
+    Applications created before November 2018 had a slightly different system,
+    involving a ``.env.dist`` file. For information about upgrading, see:
+    :doc:`configuration/dot-env-changes`.
+
+.. _configuration-env-var-in-prod:
+
+Configuring Environment Variables in Production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+In production, the ``.env`` files are also parsed and loaded on each request. So
+the easiest way to define env vars is by deploying a ``.env.local`` file to your
+production server(s) with your production values.
+
+To improve performance, you can optionally run the ``dump-env`` command (available
+in :ref:`Symfony Flex <symfony-flex>` 1.2 or later):
+
+.. code-block:: terminal
+
+    # parses ALL .env files and dumps their final values to .env.local.php
+    $ composer dump-env prod
+
+After running this command, Symfony will load the ``.env.local.php`` file to
+get the environment variables and will not spend time parsing the ``.env`` files.
+
+.. tip::
+
+    Update your deployment tools/workflow to run the ``dump-env`` command after
+    each deploy to improve the application performance.
+
+.. _configuration-secrets:
+
+Encrypting Environment Variables (Secrets)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Instead of defining a real environment variable or adding it to a ``.env`` file,
+if the value of a variable is sensitive (e.g. an API key or a database password),
+you can encrypt the value using the :doc:`secrets management system </configuration/secrets>`.
+
+Listing Environment Variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Regardless of how you set environment variables, you can see a full list with
+their values by running:
 
 .. code-block:: terminal
 
@@ -526,119 +643,6 @@ are defined and have the expected values:
 
     # run this command to show all the details for a specific env var:
     $ php bin/console debug:container --env-var=FOO
-
-.. _configuration-env-var-in-dev:
-.. _config-dot-env:
-
-Configuring Environment Variables in Development
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Instead of defining env vars in your shell or your web server, Symfony proposes
-a convenient way of defining them in your local machine based on a file called
-``.env`` (with a leading dot) located at the root of your project.
-
-The ``.env`` file is read and parsed on every request and its env vars are added
-to the ``$_ENV`` PHP variable. The existing env vars are never overwritten by
-the values defined in ``.env``, so you can combine both.
-
-This is for example the content of the ``.env`` file to define the value of the
-``DATABASE_URL`` env var shown earlier in this article:
-
-.. code-block:: bash
-
-    # .env
-    DATABASE_URL="mysql://db_user:db_password@127.0.0.1:3306/db_name"
-
-In addition to your own env vars, this ``.env`` file also contains the env vars
-defined by the third-party packages installed in your application (they are
-added automatically by :ref:`Symfony Flex <symfony-flex>` when installing packages).
-
-.. _configuration-env-var-in-prod:
-
-Configuring Environment Variables in Production
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In production, the ``.env`` files are also parsed and loaded on each request so
-you can add env vars to those already defined in the server. In order to improve
-performance, you can run the ``dump-env`` command (available when using
-:ref:`Symfony Flex <symfony-flex>` 1.2 or later).
-
-This command parses all the ``.env`` files once and compiles their contents into
-a new PHP-optimized file called  ``.env.local.php``. From that moment, Symfony
-will load the parsed file instead of parsing the ``.env`` files again:
-
-.. code-block:: terminal
-
-    $ composer dump-env prod
-
-.. tip::
-
-    Update your deployment tools/workflow to run the ``dump-env`` command after
-    each deploy to improve the application performance.
-
-.. _configuration-env-var-web-server:
-
-Creating ``.env`` files is the easiest way of using env vars in Symfony
-applications. However, you can also configure real env vars in your servers and
-operating systems.
-
-.. tip::
-
-    SymfonyCloud, the cloud service optimized for Symfony applications, defines
-    some `utilities to manage env vars`_ in production.
-
-.. caution::
-
-    Beware that dumping the contents of the ``$_SERVER`` and ``$_ENV`` variables
-    or outputting the ``phpinfo()`` contents will display the values of the
-    environment variables, exposing sensitive information such as the database
-    credentials.
-
-    The values of the env vars are also exposed in the web interface of the
-    :doc:`Symfony profiler </profiler>`. In practice this shouldn't be a
-    problem because the web profiler must **never** be enabled in production.
-
-.. _configuration-multiple-env-files:
-
-Managing Multiple .env Files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``.env`` file defines the default values for all env vars. However, it's
-common to override some of those values depending on the environment (e.g. to
-use a different database for tests) or depending on the machine (e.g. to use a
-different OAuth token on your local machine while developing).
-
-That's why you can define multiple ``.env`` files to override env vars. The
-following list shows the files loaded in all environments. The ``.env`` file is
-the only mandatory file and each file content overrides the previous one:
-
-* ``.env``: defines the default values of the env vars needed by the application;
-* ``.env.local``: overrides the default values of env vars for all environments
-  but only in the machine which contains the file (e.g. your development computer).
-  This file should not be committed to the repository and it's ignored in the
-  ``test`` environment (because tests should produce the same results for everyone);
-* ``.env.<environment>`` (e.g. ``.env.test``): overrides env vars only for some
-  environment but for all machines;
-* ``.env.<environment>.local`` (e.g. ``.env.test.local``): defines machine-specific
-  env vars overrides only for some environment. It's similar to ``.env.local``,
-  but the overrides only apply to some particular environment.
-
-.. note::
-
-    The real environment variables defined in the server always win over the
-    env vars created by the ``.env`` files.
-
-The ``.env`` and ``.env.<environment>`` files should be committed to the shared
-repository because they are the same for all developers and machines. However,
-the env files ending in ``.local`` (``.env.local`` and ``.env.<environment>.local``)
-**should not be committed** because only you will use them. In fact, the
-``.gitignore`` file that comes with Symfony prevents them from being committed.
-
-.. caution::
-
-    Applications created before November 2018 had a slightly different system,
-    involving a ``.env.dist`` file. For information about upgrading, see:
-    :doc:`configuration/dot-env-changes`.
 
 .. _configuration-accessing-parameters:
 
@@ -724,10 +728,10 @@ doesn't work for parameters:
         $container->getDefinition(MessageGenerator::class)
             ->setArgument('$contentsDir', '%app.contents_dir%');
 
-If you inject the same parameters over and over again, use instead the
-``services._defaults.bind`` option. The arguments defined in that option are
+If you inject the same parameters over and over again, use the
+``services._defaults.bind`` option instead. The arguments defined in that option are
 injected automatically whenever a service constructor or controller action
-define an argument with that exact name. For example, to inject the value of the
+defines an argument with that exact name. For example, to inject the value of the
 :ref:`kernel.project_dir parameter <configuration-kernel-project-directory>`
 whenever a service/controller defines a ``$projectDir`` argument, use this:
 
@@ -786,7 +790,7 @@ whenever a service/controller defines a ``$projectDir`` argument, use this:
     Read the article about :ref:`binding arguments by name and/or type <services-binding>`
     to learn more about this powerful feature.
 
-Finally, if some service needs to access to lots of parameters, instead of
+Finally, if some service needs access to lots of parameters, instead of
 injecting each of them individually, you can inject all the application
 parameters at once by type-hinting any of its constructor arguments with the
 :class:`Symfony\\Component\\DependencyInjection\\ParameterBag\\ContainerBagInterface`::
@@ -818,14 +822,14 @@ parameters at once by type-hinting any of its constructor arguments with the
 Keep Going!
 -----------
 
-Congratulations! You've tackled the basics in Symfony. Next, learn about *each*
+Congratulations! You've tackled the basics of Symfony. Next, learn about *each*
 part of Symfony individually by following the guides. Check out:
 
 * :doc:`/forms`
 * :doc:`/doctrine`
 * :doc:`/service_container`
 * :doc:`/security`
-* :doc:`/email`
+* :doc:`/mailer`
 * :doc:`/logging`
 
 And all the other topics related to configuration:

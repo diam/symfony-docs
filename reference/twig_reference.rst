@@ -98,7 +98,7 @@ asset
 Returns the public path of the given asset path (which can be a CSS file, a
 JavaScript file, an image path, etc.). This function takes into account where
 the application is installed (e.g. in case the project is accessed in a host
-subirectory) and the optional asset package base path.
+subdirectory) and the optional asset package base path.
 
 Symfony provides various cache busting implementations via the
 :ref:`reference-framework-assets-version`, :ref:`reference-assets-version-strategy`,
@@ -131,7 +131,7 @@ csrf_token
     {{ csrf_token(intention) }}
 
 ``intention``
-    **type**: ``string`` - an arbitrary string used to generate the token value.
+    **type**: ``string`` - an arbitrary string used to identify the token.
 
 Renders a CSRF token. Use this function if you want :doc:`CSRF protection </security/csrf>`
 in a regular HTML form not managed by the Symfony Form component.
@@ -237,7 +237,7 @@ absolute_url
 ``path``
     **type**: ``string``
 
-Returns the absolute URL from the passed relative path. Combine it with the
+Returns the absolute URL (with scheme and host) from the passed relative path. Combine it with the
 :ref:`asset() function <reference-twig-function-asset>` to generate absolute URLs
 for web assets. Read more about :ref:`Linking to CSS, JavaScript and Image Assets <templates-link-to-assets>`.
 

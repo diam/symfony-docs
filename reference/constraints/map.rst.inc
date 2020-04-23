@@ -19,6 +19,7 @@ String Constraints
 * :doc:`Length </reference/constraints/Length>`
 * :doc:`Url </reference/constraints/Url>`
 * :doc:`Regex </reference/constraints/Regex>`
+* :doc:`Hostname </reference/constraints/Hostname>`
 * :doc:`Ip </reference/constraints/Ip>`
 * :doc:`Json</reference/constraints/Json>`
 * :doc:`Uuid</reference/constraints/Uuid>`
@@ -83,6 +84,9 @@ Financial and other Number Constraints
 Other Constraints
 ~~~~~~~~~~~~~~~~~
 
+* :doc:`AtLeastOneOf </reference/constraints/AtLeastOneOf>`
+* :doc:`Sequentially </reference/constraints/Sequentially>`
+* :doc:`Compound </reference/constraints/Compound>`
 * :doc:`Callback </reference/constraints/Callback>`
 * :doc:`Expression </reference/constraints/Expression>`
 * :doc:`All </reference/constraints/All>`

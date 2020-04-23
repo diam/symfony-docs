@@ -19,8 +19,7 @@ entity manager that connects to another database might handle the rest.
 .. caution::
 
     Entities cannot define associations across different entity managers. If you
-    need that, there are `several alternatives <https://stackoverflow.com/a/11494543/2804294>`_
-    that require some custom setup.
+    need that, there are `several alternatives`_ that require some custom setup.
 
 The following configuration code shows how you can configure two entity managers:
 
@@ -156,11 +155,11 @@ The following configuration code shows how you can configure two entity managers
                         'connection' => 'default',
                         'mappings'   => [
                             'Main'  => [
-                                is_bundle => false,
-                                type => 'annotation',
-                                dir => '%kernel.project_dir%/src/Entity/Main',
-                                prefix => 'App\Entity\Main',
-                                alias => 'Main',
+                                'is_bundle' => false,
+                                'type' => 'annotation',
+                                'dir' => '%kernel.project_dir%/src/Entity/Main',
+                                'prefix' => 'App\Entity\Main',
+                                'alias' => 'Main',
                             ]
                         ],
                     ],
@@ -168,11 +167,11 @@ The following configuration code shows how you can configure two entity managers
                         'connection' => 'customer',
                         'mappings'   => [
                             'Customer'  => [
-                                is_bundle => false,
-                                type => 'annotation',
-                                dir => '%kernel.project_dir%/src/Entity/Customer',
-                                prefix => 'App\Entity\Customer',
-                                alias => 'Customer',
+                                'is_bundle' => false,
+                                'type' => 'annotation',
+                                'dir' => '%kernel.project_dir%/src/Entity/Customer',
+                                'prefix' => 'App\Entity\Customer',
+                                'alias' => 'Customer',
                             ]
                         ],
                     ],
@@ -283,3 +282,5 @@ The same applies to repository calls::
             ;
         }
     }
+
+.. _`several alternatives`: https://stackoverflow.com/a/11494543

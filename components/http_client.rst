@@ -46,14 +46,13 @@ with HTTP/2 and with doing concurrent asynchronous streamed and multiplexed
 requests/responses. Even when doing regular synchronous calls, this design
 allows keeping connections to remote hosts open between requests, improving
 performance by saving repetitive DNS resolution, SSL negotiation, etc.
-To leverage all these design benefits, the cURL extension is needed.
 
 Enabling cURL Support
 ~~~~~~~~~~~~~~~~~~~~~
 
 This component supports both the native PHP streams and cURL to make the HTTP
-requests. Although both are interchangeable and provide the same features,
-including concurrent requests, HTTP/2 is only supported when using cURL.
+requests. Both are interchangeable and provide the same features, including
+concurrent requests and HTTP/2 support.
 
 ``HttpClient::create()`` selects the cURL transport if the `cURL PHP extension`_
 is enabled and falls back to PHP streams otherwise. If you prefer to select
@@ -75,9 +74,21 @@ is installed and enabled. Otherwise, the native PHP streams will be used.
 HTTP/2 Support
 ~~~~~~~~~~~~~~
 
-When requesting an ``https`` URL, HTTP/2 is enabled by default if libcurl >= 7.36
-is used. To force HTTP/2 for ``http`` URLs, you need to enable it explicitly via
-the ``http_version`` option::
+.. versionadded:: 5.1
+
+    Integration with ``amphp/http-client`` was introduced in Symfony 5.1.
+    Prior to this version, HTTP/2 was only supported when ``libcurl`` was
+    installed.
+
+The component supports HTTP/2 if one of the following tools is
+installed:
+
+* The `libcurl`_ package version 7.36 or higher;
+* The `amphp/http-client`_ Packagist package version 4.2 or higher.
+
+When requesting an ``https`` URL and HTTP/2 is supported by your server,
+HTTP/2 is enabled by default. To force HTTP/2 for ``http`` URLs, you need
+to enable it explicitly via the ``http_version`` option::
 
     $client = HttpClient::create(['http_version' => '2.0']);
 
@@ -420,7 +431,8 @@ Handling Exceptions
 
 When the HTTP status code of the response is in the 300-599 range (i.e. 3xx,
 4xx or 5xx) your code is expected to handle it. If you don't do that, the
-``getHeaders()`` and ``getContent()`` methods throw an appropriate exception::
+``getHeaders()`` and ``getContent()`` methods throw an appropriate exception, all of
+which implement the :class:`Symfony\\Contracts\\HttpClient\\Exception\\HttpExceptionInterface`::
 
     // the response of this request will be a 403 HTTP error
     $response = $client->request('GET', 'https://httpbin.org/status/403');
@@ -432,6 +444,45 @@ When the HTTP status code of the response is in the 300-599 range (i.e. 3xx,
     // pass FALSE as the optional argument to not throw an exception and return
     // instead the original response content (even if it's an error message)
     $content = $response->getContent(false);
+
+While responses are lazy, their destructor will always wait for headers to come
+back. This means that the following request *will* complete; and if e.g. a 404
+is returned, an exception will be thrown::
+
+    // because the returned value is not assigned to a variable, the destructor
+    // of the returned response will be called immediately and will throw if the
+    // status code is in the 300-599 range
+    $client->request('POST', 'https://...');
+
+This in turn means that unassigned responses will fallback to synchronous requests.
+If you want to make these requests concurrent, you can store their corresponding
+responses in an array::
+
+    $responses[] = $client->request('POST', 'https://.../path1');
+    $responses[] = $client->request('POST', 'https://.../path2');
+    // ...
+
+    // This line will trigger the destructor of all responses stored in the array;
+    // they will complete concurrently and an exception will be thrown in case a
+    // status code in the 300-599 range is returned
+    unset($responses);
+
+This behavior provided at destruction-time is part of the fail-safe design of the
+component. No errors will be unnoticed: if you don't write the code to handle
+errors, exceptions will notify you when needed. On the other hand, if you write
+the error-handling code, you will opt-out from these fallback mechanisms as the
+destructor won't have anything remaining to do.
+
+There are three types of exceptions:
+
+* Exceptions implementing the :class:`Symfony\\Contracts\\HttpClient\\Exception\\HttpExceptionInterface`
+  are thrown when your code does not handle the status codes in the 300-599 range.
+
+* Exceptions implementing the :class:`Symfony\\Contracts\\HttpClient\\Exception\\TransportExceptionInterface`
+  are thrown when a lower level issue occurs.
+
+* Exceptions implementing the :class:`Symfony\\Contracts\\HttpClient\\Exception\\DecodingExceptionInterface`
+  are thrown when a content-type cannot be decoded to the expected representation.
 
 Concurrent Requests
 -------------------
@@ -567,7 +618,16 @@ catching ``TransportExceptionInterface`` in the foreach loop::
 
     foreach ($client->stream($responses) as $response => $chunk) {
         try {
-            if ($chunk->isLast()) {
+            if ($chunk->isTimeout()) {
+                // ... decide what to do when a timeout occurs
+                // if you want to stop a response that timed out, don't miss
+                // calling $response->cancel() or the destructor of the response
+                // will try to complete it one more time
+            } elseif ($chunk->isFirst()) {
+                // if you want to check the status code, you must do it when the
+                // first chunk arrived, using $response->getStatusCode();
+                // not doing so might trigger an HttpExceptionInterface
+            } elseif ($chunk->isLast()) {
                 // ... do something with $response
             }
         } catch (TransportExceptionInterface $e) {
@@ -828,7 +888,7 @@ Native PHP Streams
 
 Responses implementing :class:`Symfony\\Contracts\\HttpClient\\ResponseInterface`
 can be cast to native PHP streams with
-:method:`Symfony\\Component\\HttpClient\\Response\\StreamWrapper::createResource``.
+:method:`Symfony\\Component\\HttpClient\\Response\\StreamWrapper::createResource`.
 This allows using them where native PHP streams are needed::
 
     use Symfony\Component\HttpClient\HttpClient;
@@ -967,8 +1027,10 @@ However, using ``MockResponse`` allows simulating chunked responses and timeouts
 
     $mockResponse = new MockResponse($body());
 
-.. _`cURL PHP extension`: https://php.net/curl
+.. _`cURL PHP extension`: https://www.php.net/curl
 .. _`PSR-17`: https://www.php-fig.org/psr/psr-17/
 .. _`PSR-18`: https://www.php-fig.org/psr/psr-18/
 .. _`HTTPlug`: https://github.com/php-http/httplug/#readme
 .. _`Symfony Contracts`: https://github.com/symfony/contracts
+.. _`libcurl`: https://curl.haxx.se/libcurl/
+.. _`amphp/http-client`: https://packagist.org/packages/amphp/http-client

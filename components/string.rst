@@ -8,11 +8,6 @@ The String Component
     The String component provides a single object-oriented API to work with
     three "unit systems" of strings: bytes, code points and grapheme clusters.
 
-.. versionadded:: 5.0
-
-    The String component was introduced in Symfony 5.0 as an
-    :doc:`experimental feature </contributing/code/experimental>`.
-
 Installation
 ------------
 
@@ -104,20 +99,35 @@ Use the ``wrap()`` static method to instantiate more than one string object::
         new UnicodeString('hello'), new UnicodeString('world'),
     ]); // $contents = ['hello', 'world']
 
-There are two shortcut functions called ``b()`` and ``u()`` to create
-``ByteString`` and ``UnicodeString`` objects::
+If you work with lots of String objects, consider using the shortcut functions
+to make your code more concise::
 
-    // ...
+    // the b() function creates byte strings
     use function Symfony\Component\String\b;
-    use function Symfony\Component\String\u;
 
-    // both are equivalent
+    // both lines are equivalent
     $foo = new ByteString('hello');
     $foo = b('hello');
 
-    // both are equivalent
-    $baz = new UnicodeString('hello');
-    $baz = u('hello');
+    // the u() function creates Unicode strings
+    use function Symfony\Component\String\u;
+
+    // both lines are equivalent
+    $foo = new UnicodeString('hello');
+    $foo = u('hello');
+
+    // the s() function creates a byte string or Unicode string
+    // depending on the given contents
+    use function Symfony\Component\String\s;
+
+    // creates a ByteString object
+    $foo = s("\xfe\xff");
+    // creates a UnicodeString object
+    $foo = s('अनुच्छेद');
+
+.. versionadded:: 5.1
+
+    The ``s()`` function was introduced in Symfony 5.1.
 
 There are also some specialized constructors::
 
@@ -144,6 +154,16 @@ Each string object can be transformed into the other two types of objects::
 
 If the conversion is not possible for any reason, you'll get an
 :class:`Symfony\\Component\\String\\Exception\\InvalidArgumentException`.
+
+There is also a method to get the bytes stored at some position::
+
+    // ('नमस्ते' bytes = [224, 164, 168, 224, 164, 174, 224, 164, 184,
+    //                  224, 165, 141, 224, 164, 164, 224, 165, 135])
+    b('नमस्ते')->bytesAt(0);   // [224]
+    u('नमस्ते')->bytesAt(0);   // [224, 164, 168]
+
+    b('नमस्ते')->bytesAt(1);   // [164]
+    u('नमस्ते')->bytesAt(1);   // [224, 164, 174]
 
 Methods Related to Length and White Spaces
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -290,6 +310,11 @@ Methods to Search and Replace
     u('avatar-73647.png')->match('/avatar-(\d+)\.png/');
     // result = ['avatar-73647.png', '73647']
 
+    // checks if the string contains any of the other given strings
+    u('aeiou')->containsAny('a');                 // true
+    u('aeiou')->containsAny(['ab', 'efg']);       // false
+    u('aeiou')->containsAny(['eio', 'foo', 'z']); // true
+
     // finds the position of the first occurrence of the given string
     // (the second argument is the position where the search starts and negative
     // values have the same meaning as in PHP functions)
@@ -317,6 +342,10 @@ Methods to Search and Replace
         return '['.$match[0].']';
     }); // result = '[1][2][3]'
 
+.. versionadded:: 5.1
+
+    The ``containsAny()`` method was introduced in Symfony 5.1.
+
 Methods to Join, Split, Truncate and Reverse
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -338,9 +367,20 @@ Methods to Join, Split, Truncate and Reverse
     u('Symfony is great')->slice(-5);    // 'great'
 
     // reduces the string to the length given as argument (if it's longer)
-    u('Lorem Ipsum')->truncate(80);     // 'Lorem Ipsum'
-    u('Lorem Ipsum')->truncate(3);      // 'Lor'
-    u('Lorem Ipsum')->truncate(8, '…'); // 'Lorem I…'
+    u('Lorem Ipsum')->truncate(3);             // 'Lor'
+    u('Lorem Ipsum')->truncate(80);            // 'Lorem Ipsum'
+    // the second argument is the character(s) added when a string is cut
+    // (the total length includes the length of this character(s))
+    u('Lorem Ipsum')->truncate(8, '…');        // 'Lorem I…'
+    // if the third argument is false, the last word before the cut is kept
+    // even if that generates a string longer than the desired length
+    u('Lorem Ipsum')->truncate(8, '…', false); // 'Lorem Ipsum'
+
+.. versionadded:: 5.1
+
+    The third argument of ``truncate()`` was introduced in Symfony 5.1.
+
+::
 
     // breaks the string into lines of the given length
     u('Lorem Ipsum')->wordwrap(4);             // 'Lorem\nIpsum'
@@ -374,12 +414,6 @@ These methods are only available for ``ByteString`` objects::
     // returns TRUE if the string contents are valid UTF-8 contents
     b('Lorem Ipsum')->isUtf8(); // true
     b("\xc3\x28")->isUtf8();    // false
-
-    // returns the value of the byte stored at the given position
-    // ('नमस्ते' bytes = [224, 164, 168, 224, 164, 174, 224, 164, 184,
-    //                  224, 165, 141, 224, 164, 164, 224, 165, 135])
-    b('नमस्ते')->byteCode(0);  // 224
-    b('नमस्ते')->byteCode(17); // 135
 
 Methods Added by CodePointString and UnicodeString
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

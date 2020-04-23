@@ -73,7 +73,6 @@ both services:
             _defaults:
                 autowire: true
                 autoconfigure: true
-                public: false
             # ...
 
             App\Service\TwitterClient:
@@ -92,7 +91,7 @@ both services:
             xsi:schemaLocation="http://symfony.com/schema/dic/services https://symfony.com/schema/dic/services/services-1.0.xsd">
 
             <services>
-                <defaults autowire="true" autoconfigure="true" public="false"/>
+                <defaults autowire="true" autoconfigure="true"/>
                 <!-- ... -->
 
                 <!-- autowire is redundant thanks to defaults, but value is overridable on each service -->
@@ -391,7 +390,7 @@ Additionally, you can define several named autowiring aliases if you want to use
 one implementation in some cases, and another implementation in some
 other cases.
 
-For instance, you may want to use by default the ``Rot13Transformer``
+For instance, you may want to use the ``Rot13Transformer``
 implementation by default when the ``TransformerInterface`` interface is
 type hinted, but use the ``UppercaseTransformer`` implementation in some
 specific cases. To do so, you can create a normal alias from the
@@ -583,6 +582,10 @@ Public and Reusable Bundles
 ---------------------------
 
 Public bundles should explicitly configure their services and not rely on autowiring.
+Autowiring depends on the services that are available in the container and bundles have
+no control over the service container of applications they are included in. You can use
+autowiring when building reusable bundles within your company, as you have full control
+over all code.
 
 .. _ROT13: https://en.wikipedia.org/wiki/ROT13
 .. _service definition prototype: https://symfony.com/blog/new-in-symfony-3-3-psr-4-based-service-discovery

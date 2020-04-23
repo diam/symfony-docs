@@ -53,7 +53,9 @@ Take the following ``access_control`` entries as an example:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -213,7 +215,9 @@ pattern so that it is only accessible by requests from the local server itself:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -290,7 +294,7 @@ key:
                     # the 'role' and 'allow-if' options work like an OR expression, so
                     # access is granted if the expression is TRUE or the user has ROLE_ADMIN
                     roles: 'ROLE_ADMIN'
-                    allow_if: "'127.0.0.1' == request.getClientIp() or request.header.has('X-Secure-Access')"
+                    allow_if: "'127.0.0.1' == request.getClientIp() or request.headers.has('X-Secure-Access')"
 
     .. code-block:: xml
 
@@ -300,7 +304,9 @@ key:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -308,7 +314,7 @@ key:
                      access is granted if the expression is TRUE or the user has ROLE_ADMIN -->
                 <rule path="^/_internal/secure"
                     role="ROLE_ADMIN"
-                    allow-if="'127.0.0.1' == request.getClientIp() or request.header.has('X-Secure-Access')"/>
+                    allow-if="'127.0.0.1' == request.getClientIp() or request.headers.has('X-Secure-Access')"/>
             </config>
         </srv:container>
 
@@ -323,7 +329,7 @@ key:
                     // the 'role' and 'allow-if' options work like an OR expression, so
                     // access is granted if the expression is TRUE or the user has ROLE_ADMIN
                     'roles' => 'ROLE_ADMIN',
-                    'allow_if' => '"127.0.0.1" == request.getClientIp() or request.header.has('X-Secure-Access')',
+                    'allow_if' => '"127.0.0.1" == request.getClientIp() or request.headers.has('X-Secure-Access')',
                 ],
             ],
         ]);
@@ -376,7 +382,9 @@ access those URLs via a specific port. This could be useful for example for
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->
@@ -427,7 +435,9 @@ the user will be redirected to ``https``:
             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
             xmlns:srv="http://symfony.com/schema/dic/services"
             xsi:schemaLocation="http://symfony.com/schema/dic/services
-                https://symfony.com/schema/dic/services/services-1.0.xsd">
+                https://symfony.com/schema/dic/services/services-1.0.xsd
+                http://symfony.com/schema/dic/security
+                https://symfony.com/schema/dic/security/security-1.0.xsd">
 
             <config>
                 <!-- ... -->

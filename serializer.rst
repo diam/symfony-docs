@@ -63,12 +63,16 @@ As well as the following normalizers:
   objects implementing the :phpclass:`DateTimeInterface` interface
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\DateTimeZoneNormalizer` for
   :phpclass:`DateTimeZone` objects
+* :class:`Symfony\\Component\\Serializer\\Normalizer\\DateIntervalNormalizer`
+  for :phpclass:`DateInterval` objects
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\DataUriNormalizer` to
   transform :phpclass:`SplFileInfo` objects in `Data URIs`_
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\JsonSerializableNormalizer`
   to deal with objects implementing the :phpclass:`JsonSerializable` interface
 * :class:`Symfony\\Component\\Serializer\\Normalizer\\ArrayDenormalizer` to
   denormalize arrays of objects using a format like `MyObject[]` (note the `[]` suffix)
+* :class:`Symfony\\Component\\Serializer\\Normalizer\\ConstraintViolationListNormalizer` for objects implementing the :class:`Symfony\\Component\\Validator\\ConstraintViolationListInterface` interface
+* :class:`Symfony\\Component\\Serializer\\Normalizer\\ProblemNormalizer` for :class:`Symfony\\Component\\ErrorHandler\\Exception\\FlattenException` objects
 
 Custom normalizers and/or encoders can also be loaded by tagging them as
 :ref:`serializer.normalizer <reference-dic-tags-serializer-normalizer>` and
@@ -89,7 +93,6 @@ properties and setters (``setXxx()``) to change properties:
         services:
             get_set_method_normalizer:
                 class: Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer
-                public: false
                 tags: [serializer.normalizer]
 
     .. code-block:: xml
@@ -102,7 +105,7 @@ properties and setters (``setXxx()``) to change properties:
                 https://symfony.com/schema/dic/services/services-1.0.xsd">
 
             <services>
-                <service id="get_set_method_normalizer" class="Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer" public="false">
+                <service id="get_set_method_normalizer" class="Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer">
                     <tag name="serializer.normalizer"/>
                 </service>
             </services>
@@ -111,12 +114,17 @@ properties and setters (``setXxx()``) to change properties:
     .. code-block:: php
 
         // config/services.php
+        namespace Symfony\Component\DependencyInjection\Loader\Configurator;
+
         use Symfony\Component\Serializer\Normalizer\GetSetMethodNormalizer;
 
-        $container->register('get_set_method_normalizer', GetSetMethodNormalizer::class)
-            ->setPublic(false)
-            ->addTag('serializer.normalizer')
-        ;
+        return function(ContainerConfigurator $configurator) {
+            $services = $configurator->services();
+
+            $services->set('get_set_method_normalizer', GetSetMethodNormalizer::class)
+                ->tag('serializer.normalizer')
+            ;
+        };
 
 .. _serializer-using-serialization-groups-annotations:
 
@@ -231,8 +239,8 @@ take a look at how this bundle works.
     serializer/custom_normalizer
 
 .. _`API Platform`: https://api-platform.com
-.. _`JSON-LD`: http://json-ld.org
-.. _`Hydra Core Vocabulary`: http://hydra-cg.com
+.. _`JSON-LD`: https://json-ld.org
+.. _`Hydra Core Vocabulary`: http://www.hydra-cg.com
 .. _`OpenAPI`: https://www.openapis.org
 .. _`GraphQL`: https://graphql.org
 .. _`JSON:API`: https://jsonapi.org

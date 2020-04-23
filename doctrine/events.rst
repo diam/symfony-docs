@@ -124,7 +124,7 @@ do so, define a listener for the ``postPersist`` Doctrine event::
     namespace App\EventListener;
 
     use App\Entity\Product;
-    use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
+    use Doctrine\Persistence\Event\LifecycleEventArgs;
 
     class SearchIndexer
     {
@@ -233,7 +233,7 @@ define a listener for the ``postUpdate`` Doctrine event::
     namespace App\EventListener;
 
     use App\Entity\User;
-    use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
+    use Doctrine\Persistence\Event\LifecycleEventArgs;
 
     class UserChangedNotifier
     {
@@ -312,7 +312,7 @@ with the ``doctrine.orm.entity_listener`` tag:
         use App\EventListener\UserChangedNotifier;
 
         $container->autowire(UserChangedNotifier::class)
-            ->addTag('doctrine.orm.event_listener', [
+            ->addTag('doctrine.orm.entity_listener', [
                 // these are the basic options that define the entity listener
                 'event' => 'postUpdate',
                 'entity' => User::class,
@@ -344,8 +344,8 @@ want to log all the database activity. To do so, define a subscriber for the
 
     use App\Entity\Product;
     use Doctrine\Common\EventSubscriber;
-    use Doctrine\Common\Persistence\Event\LifecycleEventArgs;
     use Doctrine\ORM\Events;
+    use Doctrine\Persistence\Event\LifecycleEventArgs;
 
     class DatabaseActivitySubscriber implements EventSubscriber
     {
@@ -478,6 +478,6 @@ can do it in the service configuration:
     related event is actually fired, making them more performant.
 
 .. _`Doctrine`: https://www.doctrine-project.org/
-.. _`lifecycle events`: https://www.doctrine-project.org/projects/doctrine-orm/en/2.6/reference/events.html#lifecycle-events
-.. _`official docs about Doctrine events`: https://www.doctrine-project.org/projects/doctrine-orm/en/2.6/reference/events.html
+.. _`lifecycle events`: https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/events.html#lifecycle-events
+.. _`official docs about Doctrine events`: https://www.doctrine-project.org/projects/doctrine-orm/en/current/reference/events.html
 .. _`DoctrineMongoDBBundle documentation`: https://symfony.com/doc/current/bundles/DoctrineMongoDBBundle/index.html
